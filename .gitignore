@@ -49,4 +49,4 @@ build/
 vcpkg_installed
 
 # MS Studio 
-src/git
+src/git/*
