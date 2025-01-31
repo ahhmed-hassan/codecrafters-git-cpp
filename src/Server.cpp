@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <fstream>
 #include <string>
+#include "gitt/commands.h"
 
 int main(int argc, char *argv[])
 {
@@ -22,26 +23,9 @@ int main(int argc, char *argv[])
      std::string command = argv[1];
     
      if (command == "init") {
-         try {
-             std::filesystem::create_directory(".git");
-             std::filesystem::create_directory(".git/objects");
-             std::filesystem::create_directory(".git/refs");
-    
-             std::ofstream headFile(".git/HEAD");
-             if (headFile.is_open()) {
-                 headFile << "ref: refs/heads/main\n";
-                 headFile.close();
-             } else {
-                 std::cerr << "Failed to create .git/HEAD file.\n";
-                 return EXIT_FAILURE;
-             }
-    
-             std::cout << "Initialized git directory\n";
-         } catch (const std::filesystem::filesystem_error& e) {
-             std::cerr << e.what() << '\n';
-             return EXIT_FAILURE;
-         }
-     } else {
+         return init_command(command);
+     }
+     else {
          std::cerr << "Unknown command " << command << '\n';
          return EXIT_FAILURE;
      }
