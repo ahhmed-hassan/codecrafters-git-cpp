@@ -51,6 +51,7 @@ vcpkg_installed
 # MS Studio 
 src/gitt/x64/
 src/gitt/gitt/
+src/gitt/.vs/
 src/gitt/gitt.sln
 src/gitt/gitt.vcxproj
 src/gitt/gitt.vcxproj.filters
