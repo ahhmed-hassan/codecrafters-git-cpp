@@ -26,9 +26,9 @@ int main(int argc, char *argv[])
      if (command == "init") {
          return commands::init_command();
      }
-     else if (auto flag = argv[2]; command == "cat-file" && flag=="-p") {
+     else if (command == "cat-file") {
          
-         return commands::cat_command(flag, argv[3]);
+         return commands::cat_command(argv[2], argv[3]);
      }
      else {
          std::cerr << "Unknown command " << command << '\n';
