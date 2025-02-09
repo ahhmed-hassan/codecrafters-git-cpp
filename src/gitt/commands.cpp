@@ -2,7 +2,7 @@
 #include<filesystem>
 #include<iostream>
 #include <fstream>
-#include <zstr.hpp>
+#include "zstr.hpp"
 #include <format>
 namespace commands
 {
