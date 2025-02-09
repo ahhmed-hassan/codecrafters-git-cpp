@@ -11,6 +11,6 @@ namespace commands
 		std::filesystem::path const refsDir = gitDir / "/refs";
 		std::filesystem::path const head = gitDir / "/HEAD"; 
 	}
-	int init_command(std::string command);
-	int cat_command(std::string command);
+	int init_command();
+	int cat_command(std::string option, std::string args);
 }

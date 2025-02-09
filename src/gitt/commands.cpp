@@ -6,7 +6,7 @@
 #include <format>
 namespace commands
 {
-	int init_command(std::string command)
+	int init_command()
 	{
 
 		try {
@@ -34,9 +34,10 @@ namespace commands
 
 	}
 
-	int cat_command(std::string command)
+	int cat_command(std::string option, std::string args)
 	{
-		std::filesystem::path const blobPath = command.substr(0, 2) + "/" + command.substr(2);
+		if (option != "-p") { std::cerr << "Unknown command!\n"; return EXIT_FAILURE;  }
+		std::filesystem::path const blobPath = args.substr(0, 2) + "/" + args.substr(2);
 		std::filesystem::create_directories(blobPath.parent_path());
 		try {
 			zstr::ifstream input(blobPath.string(), std::ofstream::binary);

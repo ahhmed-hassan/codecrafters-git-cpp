@@ -24,11 +24,11 @@ int main(int argc, char *argv[])
      std::string command = argv[1];
     
      if (command == "init") {
-         return commands::init_command(command);
+         return commands::init_command();
      }
      else if (auto flag = argv[2]; command == "cat-file" && flag=="-p") {
          
-         
+         return commands::cat_command(flag, argv[3]);
      }
      else {
          std::cerr << "Unknown command " << command << '\n';
