@@ -4,6 +4,7 @@
 #include <string>
 #include "gitt/commands.h"
 
+
 int main(int argc, char *argv[])
 {
     // Flush after every std::cout / std::cerr
@@ -23,12 +24,16 @@ int main(int argc, char *argv[])
      std::string command = argv[1];
     
      if (command == "init") {
-         return init_command(command);
+         return commands::init_command(command);
+     }
+     else if (auto flag = argv[2]; command == "cat-file" && flag=="-p") {
+         
+         
      }
      else {
          std::cerr << "Unknown command " << command << '\n';
          return EXIT_FAILURE;
      }
     
-     return EXIT_SUCCESS;
+     //return EXIT_SUCCESS;
 }

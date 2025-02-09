@@ -2,29 +2,60 @@
 #include<filesystem>
 #include<iostream>
 #include <fstream>
-int init_command(std::string command)
+#include <zstr.hpp>
+#include <format>
+namespace commands
 {
+	int init_command(std::string command)
+	{
 
-	try {
-		std::filesystem::create_directory(".git");
-		std::filesystem::create_directory(".git/objects");
-		std::filesystem::create_directory(".git/refs");
+		try {
+			std::filesystem::create_directory(constants::gitDir);
+			std::filesystem::create_directory(constants::objectsDir);
+			std::filesystem::create_directory(constants::refsDir);
 
-		std::ofstream headFile(".git/HEAD");
-		if (headFile.is_open()) {
-			headFile << "ref: refs/heads/main\n";
-			headFile.close();
+			std::ofstream headFile(constants::head);
+			if (headFile.is_open()) {
+				headFile << "ref: refs/heads/main\n";
+				headFile.close();
+			}
+			else {
+				std::cerr << std::format("Failed to create {} file\n", constants::head.string());
+				return EXIT_FAILURE;
+			}
+
+			std::cout << "Initialized git directory\n";
+			return EXIT_SUCCESS;
 		}
-		else {
-			std::cerr << "Failed to create .git/HEAD file.\n";
+		catch (const std::filesystem::filesystem_error& e) {
+			std::cerr << e.what() << '\n';
 			return EXIT_FAILURE;
 		}
 
-		std::cout << "Initialized git directory\n";
-	}
-	catch (const std::filesystem::filesystem_error& e) {
-		std::cerr << e.what() << '\n';
-		return EXIT_FAILURE;
 	}
 
+	int cat_command(std::string command)
+	{
+		std::filesystem::path const blobPath = command.substr(0, 2) + "/" + command.substr(2);
+		std::filesystem::create_directories(blobPath.parent_path());
+		try {
+			zstr::ifstream input(blobPath.string(), std::ofstream::binary);
+			std::string const objectStr{ std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>() };
+			input.close();
+
+			if (auto const firstNotNull = objectStr.find('\0'); firstNotNull != std::string::npos) {
+				std::string const content = objectStr.substr(firstNotNull + 1);
+				std::cout << content << std::flush;
+				return EXIT_SUCCESS;
+			}
+
+			else { return EXIT_FAILURE; }
+
+		}
+		catch (const std::filesystem::filesystem_error& e) {
+			std::cerr << e.what() << "\n";
+			return EXIT_FAILURE;
+		}
+		return 0;
+	}
 }
