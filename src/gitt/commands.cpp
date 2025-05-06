@@ -10,9 +10,9 @@ namespace commands
 	{
 
 		try {
-			std::filesystem::create_directory(constants::gitDir);
-			std::filesystem::create_directory(constants::objectsDir);
-			std::filesystem::create_directory(constants::refsDir);
+			//std::filesystem::create_directory(constants::gitDir);
+			std::filesystem::create_directories(constants::objectsDir);
+			std::filesystem::create_directories(constants::refsDir);
 
 			std::ofstream headFile(constants::head);
 			if (headFile.is_open()) {
