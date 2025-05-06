@@ -37,10 +37,10 @@ namespace commands
 	int cat_command(std::string option, std::string args)
 	{
 		if (option != "-p") { std::cerr << "Unknown command!\n"; return EXIT_FAILURE;  }
-		std::filesystem::path const blobPath = std::filesystem::path(args.substr(0, 2)) / args.substr(2);
+		std::filesystem::path const blobPath =constants::objectsDir/ std::filesystem::path(args.substr(0, 2)) / args.substr(2);
 		std::filesystem::create_directories(blobPath.parent_path());
 		try {
-			zstr::ifstream input(blobPath.string(), std::ofstream::binary);
+			zstr::ifstream input(blobPath.string(), std::ios::binary);
 			std::string const objectStr{ std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>() };
 			input.close();
 
