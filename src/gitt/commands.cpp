@@ -3,6 +3,7 @@
 #include<iostream>
 #include <fstream>
 #include "zstr.hpp"
+#include <openssl/sha.h>
 #include <format>
 namespace commands
 {
@@ -38,7 +39,7 @@ namespace commands
 	{
 		if (option != "-p") { std::cerr << "Unknown command!\n"; return EXIT_FAILURE;  }
 		std::filesystem::path const blobPath =constants::objectsDir/ std::filesystem::path(args.substr(0, 2)) / args.substr(2);
-		std::filesystem::create_directories(blobPath.parent_path());
+		//std::filesystem::create_directories(blobPath.parent_path());
 		try {
 			zstr::ifstream input(blobPath.string(), std::ios::binary);
 			std::string const objectStr{ std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>() };
@@ -55,6 +56,11 @@ namespace commands
 		}
 		catch (const std::filesystem::filesystem_error& e) {
 			std::cerr << e.what() << "\n";
+			return EXIT_FAILURE;
+		}
+		catch (const std::exception e) 
+		{
+			std::cerr << e.what()<<"\t Damn";
 			return EXIT_FAILURE;
 		}
 		return 0;
