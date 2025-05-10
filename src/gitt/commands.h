@@ -13,4 +13,5 @@ namespace commands
 	}
 	int init_command();
 	int cat_command(std::string option, std::string args);
+	int hash_command(std::filesystem::path const& path, bool wrtiteThebject);
 }
