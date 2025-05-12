@@ -5,7 +5,7 @@
 
 #include "gitt/commands.h"
 
-#define DEBUG
+//#define DEBUG
 #ifndef DEBUG
 int main(int argc, char *argv[]){
 #else
