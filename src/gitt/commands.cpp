@@ -4,6 +4,7 @@
 #include <fstream>
 #include "zstr.hpp"
 #include <openssl/sha.h>
+
 #include <format>
 namespace utilties
 {
@@ -20,6 +21,8 @@ namespace utilties
 }
 namespace commands
 {
+	using namespace std::string_literals; 
+	using namespace std::string_view_literals;
 	int init_command()
 	{
 
@@ -50,8 +53,8 @@ namespace commands
 
 	int cat_command(std::string option, std::string args)
 	{
-		if (option != "-p") { std::cerr << "Unknown command!\n"; return EXIT_FAILURE;  }
-		std::filesystem::path const blobPath =constants::objectsDir/ std::filesystem::path(args.substr(0, 2)) / args.substr(2);
+		if (option != "-p") { std::cerr << "Unknown command!\n"; return EXIT_FAILURE; }
+		std::filesystem::path const blobPath = constants::objectsDir / std::filesystem::path(args.substr(0, 2)) / args.substr(2);
 		//std::filesystem::create_directories(blobPath.parent_path());
 		try {
 			zstr::ifstream input(blobPath.string(), std::ios::binary);
@@ -68,12 +71,12 @@ namespace commands
 
 		}
 		catch (const std::filesystem::filesystem_error& e) {
-			std::cerr << e.what() << "\n";
+			std::println(std::cerr, "{}"sv, e.what());
 			return EXIT_FAILURE;
 		}
-		catch (const std::exception e) 
+		catch (const std::exception e)
 		{
-			std::cerr << e.what()<<"\t Damn";
+			std::println(std::cerr, "{}"sv, e.what());
 			return EXIT_FAILURE;
 		}
 		return 0;
@@ -81,8 +84,42 @@ namespace commands
 
 	int hash_command(std::filesystem::path const& path, bool wrtiteThebject)
 	{
-		return utilties::sha1_hash(path.string()).size();
+//#define DEBUG
+#ifdef DEBUG
+		std::string const test = "blob 11\0hello world"; 
+		std::string test2 = "hello world"; 
+		std::println(std::cout, "{}", utilties::sha1_hash(test));
+		std::cout << utilties::sha1_hash(test);
+#endif // DEBUG		
+		try
+		{
+			std::ifstream file(path);
+			try 
+			{
+				
+				std::string content{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+				std::string const hashInput = std::format("blob {}\0{}", content.size(), content);
+				std::string const hashedContent = utilties::sha1_hash(hashInput); 
+				std::println(std::cout, "{}", hashedContent);
+				if (!wrtiteThebject) return EXIT_SUCCESS; 
+
+				std::filesystem::create_directories(constants::gitDir / hashedContent.substr(0, 2)); 
+				zstr::ofstream hashOutput (hashedContent.substr(2)); 
+				hashOutput << hashedContent; 
+				if (!hashOutput) return EXIT_FAILURE; 
+				
+
+			}
+			catch (const std::bad_alloc& e) { std::println(std::cerr,"{}", e.what()); }
+			
+		}
+		catch (const std::filesystem::filesystem_error& e)
+		{
+			std::println(std::cerr, "{}", e.what());
+		}
+		std::string const hashInputPrefix = "blob";
+		return static_cast <int>(utilties::sha1_hash(path.string()).size());
 		//return 0;
 	}
-	
+
 }
