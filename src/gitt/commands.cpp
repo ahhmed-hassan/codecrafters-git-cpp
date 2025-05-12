@@ -105,7 +105,7 @@ namespace commands
 
 				std::filesystem::create_directories(constants::gitDir / hashedContent.substr(0, 2)); 
 				const auto filePath = constants::objectsDir / hashedContent.substr(0, 2) / hashedContent.substr(2); 
-				zstr::ofstream hashOutput (filePath.string()); 
+				zstr::ofstream hashOutput (filePath.string(), std::ios::binary); 
 				hashOutput << hashedContent; 
 				return EXIT_SUCCESS; 
 				if (!hashOutput) return EXIT_FAILURE; 
