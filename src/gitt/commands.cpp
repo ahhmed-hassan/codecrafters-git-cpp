@@ -107,7 +107,7 @@ namespace commands
 				std::filesystem::create_directories(objectDir); 
 				const auto filePath = objectDir / hashedContent.substr(2); 
 				zstr::ofstream hashOutput (filePath.string(), std::ios::binary); 
-				hashOutput << hashedContent; 
+				hashOutput << hashInput; 
 				return EXIT_SUCCESS; 
 				if (!hashOutput) return EXIT_FAILURE; 
 				
