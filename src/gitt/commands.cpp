@@ -103,8 +103,9 @@ namespace commands
 				std::println(std::cout, "{}", hashedContent);
 				if (!wrtiteThebject) return EXIT_SUCCESS; 
 
-				std::filesystem::create_directories(constants::gitDir / hashedContent.substr(0, 2)); 
-				const auto filePath = constants::objectsDir / hashedContent.substr(0, 2) / hashedContent.substr(2); 
+				std::filesystem::path objectDir = constants::objectsDir / hashedContent.substr(0, 2); 
+				std::filesystem::create_directories(objectDir); 
+				const auto filePath = objectDir / hashedContent.substr(2); 
 				zstr::ofstream hashOutput (filePath.string(), std::ios::binary); 
 				hashOutput << hashedContent; 
 				return EXIT_SUCCESS; 
