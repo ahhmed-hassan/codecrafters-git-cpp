@@ -104,7 +104,7 @@ namespace commands
 				if (!wrtiteThebject) return EXIT_SUCCESS; 
 
 				std::filesystem::create_directories(constants::gitDir / hashedContent.substr(0, 2)); 
-				const auto filePath = constants::gitDir / hashedContent.substr(0, 2) / hashedContent.substr(2); 
+				const auto filePath = constants::objectsDir / hashedContent.substr(0, 2) / hashedContent.substr(2); 
 				zstr::ofstream hashOutput (filePath.string()); 
 				hashOutput << hashedContent; 
 				return EXIT_SUCCESS; 
