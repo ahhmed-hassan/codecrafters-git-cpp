@@ -98,8 +98,8 @@ namespace commands
 			{
 				
 				std::string content{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
-				std::string const hashInput = std::format("blob {}\0{}", content.size(), content);
-				std::string const hashedContent = utilties::sha1_hash(hashInput); 
+				std::string const raw = std::format("blob {}\0{}", content.size(), content);
+				std::string const hashedContent = utilties::sha1_hash(raw); 
 				std::println(std::cout, "{}", hashedContent);
 				if (!wrtiteThebject) return EXIT_SUCCESS; 
 
@@ -107,7 +107,7 @@ namespace commands
 				std::filesystem::create_directories(objectDir); 
 				const auto filePath = objectDir / hashedContent.substr(2); 
 				zstr::ofstream hashOutput (filePath.string(), std::ios::binary); 
-				hashOutput << hashInput; 
+				hashOutput.write(raw.data(), raw.size()); 
 				return EXIT_SUCCESS; 
 				if (!hashOutput) return EXIT_FAILURE; 
 				
