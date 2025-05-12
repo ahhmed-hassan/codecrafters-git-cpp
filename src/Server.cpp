@@ -9,6 +9,7 @@
 //#define DEBUG
 #ifndef DEBUG
 int main(int argc, char *argv[]){
+    std::vector<std::string> args(argv, argv + argc);
 #else
 #include<sstream>
 int main() {
@@ -39,21 +40,21 @@ int main() {
          return EXIT_FAILURE;
      }
     
-     std::string command = argv[1];
+     std::string command = args[1];
     
      if (command == "init") {
          return commands::init_command();
      }
      else if (command == "cat-file") {
-         std::string option = argv[2]; 
-         std::string arg = argv[3]; 
+         std::string option = args[2]; 
+         std::string arg = args[3]; 
          return commands::cat_command(argv[2], argv[3]);
      }
      else if (command == "hash-object")
      {
          
-         std::string arg = argv.back(); 
-         bool writeOption = argv.size() == 4; 
+         std::string arg = args.back(); 
+         bool writeOption = args.size() == 4; 
          return commands::hash_command(arg, writeOption); 
      }
      else {
