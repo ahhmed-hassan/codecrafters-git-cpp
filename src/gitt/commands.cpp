@@ -106,6 +106,7 @@ namespace commands
 				std::filesystem::create_directories(constants::gitDir / hashedContent.substr(0, 2)); 
 				zstr::ofstream hashOutput (hashedContent.substr(2)); 
 				hashOutput << hashedContent; 
+				return EXIT_SUCCESS; 
 				if (!hashOutput) return EXIT_FAILURE; 
 				
 
