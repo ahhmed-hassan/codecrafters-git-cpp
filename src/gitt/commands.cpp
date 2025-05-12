@@ -7,16 +7,16 @@
 #include <format>
 namespace utilties
 {
-	std::string sha1_hash(const std::string& content) {
-		unsigned char hash[SHA_DIGEST_LENGTH];
-		SHA1(reinterpret_cast<const unsigned char*>(content.data()), content.size(), hash);
+	//std::string sha1_hash(const std::string& content) {
+	//	unsigned char hash[SHA_DIGEST_LENGTH];
+	//	SHA1(reinterpret_cast<const unsigned char*>(content.data()), content.size(), hash);
 
-		std::stringstream ss;
-		for (int i = 0; i < SHA_DIGEST_LENGTH; ++i) {
-			ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hash[i]);
-		}
-		return ss.str();
-	}
+	//	std::stringstream ss;
+	//	for (int i = 0; i < SHA_DIGEST_LENGTH; ++i) {
+	//		ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hash[i]);
+	//	}
+	//	return ss.str();
+	//}
 }
 namespace commands
 {
