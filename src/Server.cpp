@@ -1,11 +1,12 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <sstream>
 #include <string>
 
 #include "gitt/commands.h"
 
-//#define DEBUG
+#define DEBUG
 #ifndef DEBUG
 int main(int argc, char *argv[]){
 #else
@@ -47,6 +48,13 @@ int main() {
          std::string option = argv[2]; 
          std::string arg = argv[3]; 
          return commands::cat_command(argv[2], argv[3]);
+     }
+     else if (command == "hash-object")
+     {
+         
+         std::string arg = argv.back(); 
+         bool writeOption = argv.size() == 4; 
+         return commands::hash_command(arg, writeOption); 
      }
      else {
          std::cerr << "Unknown command " << command << '\n';
