@@ -5,7 +5,7 @@
 #include <vector>
 #include "gitt/commands.h"
 
-//#define DEBUG
+#define DEBUG
 #ifndef DEBUG
 int main(int argc, char *argv[]){
     std::vector<std::string> args(argv, argv + argc);
@@ -53,7 +53,7 @@ int main() {
      {
          
          std::string arg = args.back(); 
-         bool writeOption = args.size() == 4; 
+         bool writeOption = std::ranges::find(args, "-w")!= args.end();
          return commands::hash_command(arg, writeOption); 
      }
      else {
