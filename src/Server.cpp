@@ -5,7 +5,7 @@
 #include <vector>
 #include "gitt/commands.h"
 
-//#define DEBUG
+#define DEBUG
 #ifndef DEBUG
 int main(int argc, char *argv[]){
     std::vector<std::string> args(argv, argv + argc);
@@ -16,10 +16,10 @@ int main() {
     std::getline(std::cin, input);
 
     std::istringstream iss(input);
-    std::vector<std::string> argv((std::istream_iterator<std::string>(iss)),
+    std::vector<std::string> args((std::istream_iterator<std::string>(iss)),
         std::istream_iterator<std::string>());
-    argv.insert(argv.begin(), "notImportant");
-    size_t argc = argv.size();
+    args.insert(args.begin(), "notImportant");
+    size_t argc = args.size();
 
 #endif // DEBUG
 
@@ -47,7 +47,7 @@ int main() {
      else if (command == "cat-file") {
          std::string option = args[2]; 
          std::string arg = args[3]; 
-         return commands::cat_command(argv[2], argv[3]);
+         return commands::cat_command(args[2], args[3]);
      }
      else if (command == "hash-object")
      {
