@@ -98,6 +98,7 @@ namespace commands
 			{
 				
 				std::string content{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+				file.close(); 
 				std::string const header = "blob " + std::to_string(content.size()); 
 				std::string const raw = header + '\0' + content;
 				std::string const hashedContent = utilties::sha1_hash(raw); 
