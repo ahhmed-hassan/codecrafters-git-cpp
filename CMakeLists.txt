@@ -12,3 +12,5 @@ find_package(ZLIB REQUIRED)
 add_executable(git ${SOURCE_FILES})
 
 target_link_libraries(git -lz)
+target_link_libraries(git PRIVATE OpenSSL::Crypto)
+target_link_libraries(git PRIVATE ZLIB::ZLIB)
