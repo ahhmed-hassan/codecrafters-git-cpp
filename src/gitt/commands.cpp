@@ -93,12 +93,13 @@ namespace commands
 #endif // DEBUG		
 		try
 		{
-			std::ifstream file(path);
+			std::ifstream file(path, std::ios::binary);
 			try 
 			{
 				
 				std::string content{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
-				std::string const raw = std::format("blob {}\0{}", content.size(), content);
+				std::string const header = "blob " + std::to_string(content.size()); 
+				std::string const raw = header + '\0' + content;
 				std::string const hashedContent = utilties::sha1_hash(raw); 
 				std::println(std::cout, "{}", hashedContent);
 				if (!wrtiteThebject) return EXIT_SUCCESS; 
@@ -106,10 +107,12 @@ namespace commands
 				std::filesystem::path objectDir = constants::objectsDir / hashedContent.substr(0, 2); 
 				std::filesystem::create_directories(objectDir); 
 				const auto filePath = objectDir / hashedContent.substr(2); 
-				zstr::ofstream hashOutput (filePath.string(), std::ios::binary); 
-				hashOutput.write(raw.data(), raw.size()); 
+				zstr::ofstream blobFile (filePath.string(), std::ios::binary); 
+				if (!blobFile) return EXIT_FAILURE; 
+				blobFile.write(raw.data(), raw.size());
+				blobFile.close(); 
 				return EXIT_SUCCESS; 
-				if (!hashOutput) return EXIT_FAILURE; 
+				
 				
 
 			}
@@ -120,8 +123,7 @@ namespace commands
 		{
 			std::println(std::cerr, "{}", e.what());
 		}
-		std::string const hashInputPrefix = "blob";
-		return static_cast <int>(utilties::sha1_hash(path.string()).size());
+		
 		//return 0;
 	}
 
