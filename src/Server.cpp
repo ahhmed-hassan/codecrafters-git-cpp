@@ -1,9 +1,8 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
-#include <sstream>
 #include <string>
-
+#include <vector>
 #include "gitt/commands.h"
 
 //#define DEBUG
