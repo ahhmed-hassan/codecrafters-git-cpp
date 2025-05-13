@@ -65,7 +65,6 @@ namespace commands
 	{
 		if (option != "-p") { std::cerr << "Unknown command!\n"; return EXIT_FAILURE; }
 		std::filesystem::path const blobPath = constants::objectsDir / std::filesystem::path(args.substr(0, 2)) / args.substr(2);
-		//std::filesystem::create_directories(blobPath.parent_path());
 		try {
 			zstr::ifstream input(blobPath.string(), std::ios::binary);
 			std::string const objectStr{ std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>() };
@@ -94,13 +93,7 @@ namespace commands
 
 	int hash_command(std::filesystem::path const& path, bool wrtiteThebject)
 	{
-//#define DEBUG
-#ifdef DEBUG
-		std::string const test = "blob 11\0hello world"; 
-		std::string test2 = "hello world"; 
-		std::println(std::cout, "{}", utilties::sha1_hash(test));
-		std::cout << utilties::sha1_hash(test);
-#endif // DEBUG		
+	
 		try
 		{
 			std::ifstream file(path);
@@ -119,16 +112,7 @@ namespace commands
 				std::filesystem::path objectDir = constants::objectsDir / hashedContent.substr(0, 2); 
 				std::filesystem::create_directories(objectDir); 
 				const auto filePath = objectDir / hashedContent.substr(2); 
-				/*auto compressedSize = compressBound(raw.size()); 
-				std::string compressed{}; compressed.resize(compressedSize); 
-				compress(reinterpret_cast<Bytef*>(&compressed[0]), &compressedSize, reinterpret_cast<Bytef const*>(raw.data()), raw.size()); 
-				compressed.resize(compressedSize); */
 				auto compressed = utilties::zlib_compressed_str(raw); 
-
-				//zstr::ofstream blobFile (filePath.string(), std::ios::binary); 
-				//if (!blobFile) return EXIT_FAILURE; 
-				//blobFile.write(raw.data(), raw.size());
-				//blobFile.close(); 
 				std::ofstream outputHashStream(filePath); 
 				if (!outputHashStream) return EXIT_FAILURE; 
 				outputHashStream << compressed; 
