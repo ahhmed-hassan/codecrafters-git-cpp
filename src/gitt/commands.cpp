@@ -19,6 +19,15 @@ namespace utilties
 		}
 		return ss.str();
 	}
+	
+	std::string zlib_compressed_str(std::string const& input)
+	{
+		auto compressedSize = compressBound(input.size());
+		std::string compressed{}; compressed.resize(compressedSize);
+		compress(reinterpret_cast<Bytef*>(&compressed[0]), &compressedSize, reinterpret_cast<Bytef const*>(input.data()), input.size());
+		compressed.resize(compressedSize);
+		return compressed; 
+	}
 }
 namespace commands
 {
@@ -110,10 +119,11 @@ namespace commands
 				std::filesystem::path objectDir = constants::objectsDir / hashedContent.substr(0, 2); 
 				std::filesystem::create_directories(objectDir); 
 				const auto filePath = objectDir / hashedContent.substr(2); 
-				auto compressedSize = compressBound(raw.size()); 
+				/*auto compressedSize = compressBound(raw.size()); 
 				std::string compressed{}; compressed.resize(compressedSize); 
 				compress(reinterpret_cast<Bytef*>(&compressed[0]), &compressedSize, reinterpret_cast<Bytef const*>(raw.data()), raw.size()); 
-				compressed.resize(compressedSize); 
+				compressed.resize(compressedSize); */
+				auto compressed = utilties::zlib_compressed_str(raw); 
 
 				//zstr::ofstream blobFile (filePath.string(), std::ios::binary); 
 				//if (!blobFile) return EXIT_FAILURE; 
