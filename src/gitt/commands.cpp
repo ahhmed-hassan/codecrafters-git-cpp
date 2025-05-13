@@ -3,6 +3,7 @@
 #include<iostream>
 #include <fstream>
 #include "zstr.hpp"
+#include <zlib.h>
 #include <openssl/sha.h>
 
 #include <format>
@@ -93,7 +94,7 @@ namespace commands
 #endif // DEBUG		
 		try
 		{
-			std::ifstream file(path, std::ios::binary);
+			std::ifstream file(path);
 			try 
 			{
 				
@@ -103,15 +104,25 @@ namespace commands
 				std::string const raw = header + '\0' + content;
 				std::string const hashedContent = utilties::sha1_hash(raw); 
 				std::println(std::cout, "{}", hashedContent);
-				if (!wrtiteThebject) return EXIT_SUCCESS; 
+
+				if (!wrtiteThebject) return EXIT_SUCCESS; 	
 
 				std::filesystem::path objectDir = constants::objectsDir / hashedContent.substr(0, 2); 
 				std::filesystem::create_directories(objectDir); 
 				const auto filePath = objectDir / hashedContent.substr(2); 
-				zstr::ofstream blobFile (filePath.string(), std::ios::binary); 
-				if (!blobFile) return EXIT_FAILURE; 
-				blobFile.write(raw.data(), raw.size());
-				blobFile.close(); 
+				auto compressedSize = compressBound(raw.size()); 
+				std::string compressed{}; compressed.resize(compressedSize); 
+				compress(reinterpret_cast<Bytef*>(&compressed[0]), &compressedSize, reinterpret_cast<Bytef const*>(raw.data()), raw.size()); 
+				compressed.resize(compressedSize); 
+
+				//zstr::ofstream blobFile (filePath.string(), std::ios::binary); 
+				//if (!blobFile) return EXIT_FAILURE; 
+				//blobFile.write(raw.data(), raw.size());
+				//blobFile.close(); 
+				std::ofstream outputHashStream(filePath); 
+				if (!outputHashStream) return EXIT_FAILURE; 
+				outputHashStream << compressed; 
+				outputHashStream.close(); 
 				return EXIT_SUCCESS; 
 				
 				
