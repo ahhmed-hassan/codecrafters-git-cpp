@@ -91,7 +91,7 @@ namespace commands
 
 					entries.push_back({ std::move(mode),
 										std::move(name),
-										to_hex(sha_raw)
+										sha_raw
 						/*std::format("{:02x}"sv, sha_raw)*/ });
 				}
 
