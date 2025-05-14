@@ -32,15 +32,17 @@ int main() {
     // You can use print statements as follows for debugging, they'll be visible when running tests.
     std::cerr << "Logs from your program will appear here!\n";
 
-    // Uncomment this block to pass the first stage
-    //
+    
+     
      if (argc < 2) {
          std::cerr << "No command provided.\n";
          return EXIT_FAILURE;
      }
     
      std::string command = args[1];
-    
+
+
+
      if (command == "init") {
          return commands::init_command();
      }
@@ -55,6 +57,12 @@ int main() {
          std::string arg = args.back(); 
          bool writeOption = std::ranges::find(args, "-w")!= args.end();
          return commands::hash_command(arg, writeOption); 
+     }
+     else if (command == "ls-tree")
+     {
+         std::string arg = args.back(); 
+         bool namesOnly = std::ranges::find(args, "--name-only") != args.end(); 
+         return commands::ls_tree_command(arg, namesOnly); 
      }
      else {
          std::cerr << "Unknown command " << command << '\n';
