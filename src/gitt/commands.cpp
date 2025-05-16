@@ -249,7 +249,7 @@ namespace commands
 		for (auto const& de : fs::directory_iterator(pathToTree))
 			if (!fs::is_directory(de) || (!fs::is_empty(de) && fs::is_directory(de) && de.path().filename() != ".git"))
 				vec.push_back(de);
-
+		std::ranges::sort(vec, {}, &fs::directory_entry::path);
 		struct HashAndEntry { std::string hash{}; fs::directory_entry e{}; };
 		//auto hash_func = [](fs::directory_entry const& de){ fs::is_directory(de)? }
 		auto entriesHashe = std::ranges::transform_view(vec, [](fs::directory_entry const& e)-> HashAndEntry {
