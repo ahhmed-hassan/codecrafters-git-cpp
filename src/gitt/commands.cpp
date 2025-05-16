@@ -281,7 +281,7 @@ namespace commands
 			//content += x;
 
 		auto endValue = header + std::to_string(content.size()) + '\0' + content;
-		auto treeHash = utilities::sha1_hash(content);
+		auto treeHash = utilities::sha1_hash(endValue);
 		auto objectDirPath = constants::objectsDir / treeHash.substr(0, 2);
 		fs::create_directories(objectDirPath);
 		const auto filePath = objectDirPath / treeHash.substr(2);
