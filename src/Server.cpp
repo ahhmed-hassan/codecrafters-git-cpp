@@ -64,7 +64,7 @@ int main() {
          bool namesOnly = std::ranges::find(args, "--name-only") != args.end(); 
          return commands::ls_tree_command(arg, namesOnly); 
      }
-     else if (command == "write_tree")
+     else if (command == "write-tree")
      {
          return commands::write_tree_command();
      }
