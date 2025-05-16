@@ -5,7 +5,7 @@
 #include <vector>
 #include "gitt/commands.h"
 
-#define DEBUG
+//#define DEBUG
 #ifndef DEBUG
 int main(int argc, char *argv[]){
     std::vector<std::string> args(argv, argv + argc);
