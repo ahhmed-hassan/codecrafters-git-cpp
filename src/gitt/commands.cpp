@@ -108,6 +108,40 @@ namespace commands
 
 			return std::vector<Tree>();
 		}
+	
+		std::string hexToByteString(const std::string& hex) {
+			std::string cleanHex;
+
+			// Remove optional "0x" prefix
+			if (hex.rfind("0x", 0) == 0 || hex.rfind("0X", 0) == 0) {
+				cleanHex = hex.substr(2);
+			}
+			else {
+				cleanHex = hex;
+			}
+
+			// Check even length
+			if (cleanHex.length() % 2 != 0) {
+				throw std::invalid_argument("Hex string must have even length");
+			}
+
+			std::string byteStr;
+			byteStr.reserve(cleanHex.length() / 2);
+
+			for (size_t i = 0; i < cleanHex.length(); i += 2) {
+				std::string byteHex = cleanHex.substr(i, 2);
+
+				// Validate hex digits
+				if (!std::isxdigit(byteHex[0]) || !std::isxdigit(byteHex[1])) {
+					throw std::invalid_argument("Invalid hex digit");
+				}
+
+				char byte = static_cast<char>(std::stoi(byteHex, nullptr, 16));
+				byteStr.push_back(byte);
+			}
+
+			return byteStr;
+		}
 	}
 	int init_command()
 	{
@@ -256,12 +290,12 @@ namespace commands
 			if (fs::is_directory(e)) {
 				if (auto hash = write_tree_and_get_hash(e.path()); hash.has_value())
 				{
-					return HashAndEntry{hash.value(), e};
+					return HashAndEntry{utilities::hexToByteString(hash.value()), e};
 				}
 			}
 			else if (auto hash = create_hash_and_give_sha(e.path(), true); hash.has_value())
 			{
-				return HashAndEntry{ hash.value(),e};
+				return HashAndEntry{ utilities::hexToByteString(hash.value()),e};
 			}
 			});
 
