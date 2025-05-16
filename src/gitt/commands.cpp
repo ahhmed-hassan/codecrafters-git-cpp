@@ -239,25 +239,35 @@ namespace commands
 
 	std::expected<std::string,std::string> write_tree_and_get_hash(fs::path const& pathToTree)
 	{
-		if (fs::is_empty(pathToTree))
+		if (fs::is_empty(pathToTree) &&fs::is_directory(pathToTree))
 			return {};
 
 		std::vector<fs::directory_entry> vec{};
-		std::copy_if(fs::directory_iterator(pathToTree), fs::directory_iterator(), std::back_inserter(vec), 
-			[](fs::directory_entry const& de)
-			{return de != fs::path(".git") && (!fs::is_empty(de) && fs::is_directory(de)); });
-		
+		//std::copy_if(fs::directory_iterator(pathToTree), fs::directory_iterator(), std::back_inserter(vec), 
+		//	[](fs::directory_entry const& de)
+		//	{return !fs::is_directory(de) || (!fs::is_empty(de) && fs::is_directory(de) && de.path().filename() != ".git"); });
+		for (auto const& de : fs::directory_iterator(pathToTree))
+			if (!fs::is_directory(de) || (!fs::is_empty(de) && fs::is_directory(de) && de.path().filename() != ".git"))
+				vec.push_back(de);
 
 		struct HashAndEntry { std::string hash{}; fs::directory_entry e{}; };
-
+		//auto hash_func = [](fs::directory_entry const& de){ fs::is_directory(de)? }
 		auto entriesHashe = std::ranges::transform_view(vec, [](fs::directory_entry const& e)-> HashAndEntry {
-			return fs::is_directory(e) ? 
-				HashAndEntry{ write_tree_and_get_hash(e.path()).value(), e} :
-				HashAndEntry{ create_hash_and_give_sha(e.path(), true).value(),e };
+			if (fs::is_directory(e)) {
+				if (auto hash = write_tree_and_get_hash(e.path()); hash.has_value())
+				{
+					return HashAndEntry{hash.value(), e};
+				}
+			}
+			else if (auto hash = create_hash_and_give_sha(e.path(), true); hash.has_value())
+			{
+				return HashAndEntry{ hash.value(),e};
+			}
 			});
 
 		auto trees = entriesHashe
-			| std::views::transform([](HashAndEntry const&  x) -> Tree {return Tree(x.e, x.hash); });
+			| std::views::transform([](HashAndEntry const&  x) -> Tree {return Tree(x.e, x.hash); })
+			|std::ranges::to<std::vector>();
 		
 		auto treeConverter = [](const Tree& t) ->std::string
 			{return std::string(t.perm_) + " " + t.name_ + '\0' + t.shaHash_; };
@@ -273,10 +283,12 @@ namespace commands
 		auto endValue = header + std::to_string(content.size()) + '\0' + content;
 		auto treeHash = utilities::sha1_hash(endValue);
 		auto objectDirPath = constants::objectsDir / treeHash.substr(0, 2);
+		fs::create_directories(objectDirPath);
 		const auto filePath = objectDirPath / treeHash.substr(2);
 		auto compressed = utilities::zlib_compressed_str(endValue);
 		std::ofstream outputHashStream(filePath);
-		if (!outputHashStream) return std::unexpected("EXIT_FAILURE");
+		if (!outputHashStream) 
+			return std::unexpected("EXIT_FAILURE");
 		outputHashStream << compressed;
 		outputHashStream.close();
 		return treeHash;
@@ -303,6 +315,8 @@ namespace commands
 
 	Tree::Tree(std::filesystem::directory_entry const& de, std::string const& hash)
 	{
+		//if (de.path().string().empty())
+			//int x = 5;
 		std::string const name = de.path().filename().string();
 		auto get_mode = [](fs::directory_entry const& e) -> std::string
 			{
