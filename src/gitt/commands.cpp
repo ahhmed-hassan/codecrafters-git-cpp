@@ -7,6 +7,8 @@
 #include<algorithm>
 #include<ranges>
 #include <functional>
+#include <numeric>
+
 
 #include <openssl/sha.h>
 
@@ -14,6 +16,7 @@
 
 namespace commands
 {
+	namespace fs = std::filesystem; 
 	using namespace std::string_literals;
 	using namespace std::string_view_literals;
 
@@ -33,9 +36,9 @@ namespace commands
 
 		std::string zlib_compressed_str(std::string const& input)
 		{
-			auto compressedSize = compressBound(input.size());
+			auto compressedSize = compressBound(static_cast<uLong>(input.size()));
 			std::string compressed{}; compressed.resize(compressedSize);
-			compress(reinterpret_cast<Bytef*>(&compressed[0]), &compressedSize, reinterpret_cast<Bytef const*>(input.data()), input.size());
+			compress(reinterpret_cast<Bytef*>(&compressed[0]), &compressedSize, reinterpret_cast<Bytef const*>(input.data()), static_cast<uLong>(input.size()));
 			compressed.resize(compressedSize);
 			return compressed;
 		}
@@ -164,10 +167,10 @@ namespace commands
 		return 0;
 	}
 
-	int hash_command(std::filesystem::path const& path, bool wrtiteThebject)
+	int hash_command(std::filesystem::path const& path, bool wrtiteThebject, bool print)
 	{
 
-		try
+		/*try
 		{
 			std::ifstream file(path);
 			try
@@ -178,7 +181,10 @@ namespace commands
 				std::string const header = "blob " + std::to_string(content.size());
 				std::string const raw = header + '\0' + content;
 				std::string const hashedContent = utilities::sha1_hash(raw);
-				std::println(std::cout, "{}", hashedContent);
+				if (print)
+				{
+					std::println(std::cout, "{}", hashedContent);
+				}
 
 				if (!wrtiteThebject) return EXIT_SUCCESS;
 
@@ -203,7 +209,18 @@ namespace commands
 			std::println(std::cerr, "{}", e.what());
 		}
 
-		//return 0;
+		return EXIT_FAILURE;*/
+		auto shaHash = create_hash_and_give_sha(path, wrtiteThebject); 
+		if (shaHash.has_value())
+		{
+			
+			if(print) std::println(std::cout, "{}", shaHash.value());
+			return EXIT_SUCCESS;
+		}
+		else
+		{
+			std::println(std::cout, "{}", shaHash.error()); return EXIT_FAILURE; 
+		}
 	}
 
 	int ls_tree_command(std::string args, bool namesOnly)
@@ -219,6 +236,129 @@ namespace commands
 		//for()
 		return EXIT_SUCCESS;
 	}
+
+	std::expected<std::string,std::string> write_tree_and_get_hash(fs::path const& pathToTree)
+	{
+		if (fs::is_empty(pathToTree))
+			return {};
+
+		std::vector<fs::directory_entry> vec{};
+		std::copy_if(fs::directory_iterator(pathToTree), fs::directory_iterator(), std::back_inserter(vec), 
+			[](fs::directory_entry const& de)
+			{return de != fs::path(".git") && (!fs::is_empty(de) && fs::is_directory(de)); });
+		
+
+		struct HashAndEntry { std::string hash{}; fs::directory_entry e{}; };
+
+		auto entriesHashe = std::ranges::transform_view(vec, [](fs::directory_entry const& e)-> HashAndEntry {
+			return fs::is_directory(e) ? 
+				HashAndEntry{ write_tree_and_get_hash(e.path()).value(), e} :
+				HashAndEntry{ create_hash_and_give_sha(e.path(), true).value(),e };
+			});
+
+		auto trees = entriesHashe
+			| std::views::transform([](HashAndEntry const&  x) -> Tree {return Tree(x.e, x.hash); });
+		
+		auto treeConverter = [](const Tree& t) ->std::string
+			{return std::string(t.perm_) + " " + t.name_ + '\0' + t.shaHash_; };
+
+		auto vectorOfContent = trees | std::views::transform(treeConverter);// | std::ranges::to<std::vector>();
+		std::string const content = std::ranges::fold_left(vectorOfContent, std::string{}, std::plus<>()); 
+		std::string header = "tree ";
+		//auto content = trees | std::views::transform(treeConverter);
+		//std::string content{}; 
+		//for (auto&& x : vectorOfContent)
+			//content += x;
+
+		auto endValue = header + std::to_string(content.size()) + '\0' + content;
+		auto treeHash = utilities::sha1_hash(endValue);
+		auto objectDirPath = constants::objectsDir / treeHash.substr(0, 2);
+		const auto filePath = objectDirPath / treeHash.substr(2);
+		auto compressed = utilities::zlib_compressed_str(endValue);
+		std::ofstream outputHashStream(filePath);
+		if (!outputHashStream) return std::unexpected("EXIT_FAILURE");
+		outputHashStream << compressed;
+		outputHashStream.close();
+		return treeHash;
+
+
+	}
+	
+	int write_tree_command()
+	{
+		if (auto res = write_tree_and_get_hash(fs::path(".")); res.has_value())
+		{
+			std::cout << res.value(); return EXIT_SUCCESS;
+		}
+		else 
+		{
+			std::println(std::cout, "{}", res.error()); return EXIT_FAILURE; 
+		}
+	}
 	
 
+	Tree::Tree(std::string_view perm, std::string_view name, std::string_view hash): perm_(perm), name_(name), shaHash_(hash)
+	{
+	}
+
+	Tree::Tree(std::filesystem::directory_entry const& de, std::string const& hash)
+	{
+		std::string const name = de.path().filename().string();
+		auto get_mode = [](fs::directory_entry const& e) -> std::string
+			{
+				if (fs::is_directory(e)) return "40000";
+				if (fs::is_regular_file(e)) return "100644";
+				else if (fs::is_symlink(e)) return "120000";
+				else return "100755";
+			};
+		name_ = name; perm_ = get_mode(de); shaHash_ = hash; 
+	}
+
+
+}
+
+std::expected<std::string, std::string> commands::create_hash_and_give_sha(std::filesystem::path const& path, bool writeTheObject)
+{
+	try
+	{
+		std::ifstream file(path);
+		try
+		{
+
+			std::string content{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+			file.close();
+			std::string const header = "blob " + std::to_string(content.size());
+			std::string const raw = header + '\0' + content;
+			std::string const hashedContent = utilities::sha1_hash(raw);
+			/*if (print)
+			{
+				std::println(std::cout, "{}", hashedContent);
+			}*/
+
+			if (!writeTheObject) return hashedContent;
+
+			std::filesystem::path objectDir = constants::objectsDir / hashedContent.substr(0, 2);
+			std::filesystem::create_directories(objectDir);
+			const auto filePath = objectDir / hashedContent.substr(2);
+			auto compressed = utilities::zlib_compressed_str(raw);
+			std::ofstream outputHashStream(filePath);
+			if (!outputHashStream) return std::unexpected("EXIT_FAILURE");
+			outputHashStream << compressed;
+			outputHashStream.close();
+			return hashedContent;
+
+
+
+		}
+		catch (const std::bad_alloc& e) { std::println(std::cerr, "{}", e.what()); return std::unexpected(e.what());
+		}
+
+	}
+	catch (const std::filesystem::filesystem_error& e)
+	{
+		std::println(std::cerr, "{}", e.what());
+		return std::unexpected(e.what());
+	}
+
+	return "ERROR";
 }
