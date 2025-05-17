@@ -227,7 +227,42 @@ namespace commands
 
 	int hash(std::filesystem::path const& path, bool wrtiteThebject, bool print)
 	{
-		if (auto shaHash = create_hash_and_give_sha(path, wrtiteThebject); shaHash.has_value())
+		try 
+		{
+			std::ifstream file(path);
+			try
+			{
+
+				std::string content{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
+				file.close();
+				std::string const header = "blob " + std::to_string(content.size());
+				std::string const finaHashInput = header + '\0' + content;
+
+				if (auto blobHash = utilities::hash_and_save(finaHashInput, wrtiteThebject); blobHash)
+				{
+					if (print) 
+						std::println(std::cout, "{}", blobHash.value());
+					return EXIT_SUCCESS;
+				}
+				else
+				{
+					std::println(std::cerr, "{}", blobHash.error());
+					return EXIT_FAILURE;
+				}
+			}
+			catch (const std::bad_alloc& e)
+			{
+				std::println(std::cerr, "{}", e.what());
+				return EXIT_FAILURE;
+			}
+
+		}
+		catch (std::filesystem::filesystem_error const& e)
+		{
+			std::println(std::cerr, "Cannot open the file {}", e.what());
+			return EXIT_FAILURE;
+		}
+		/*if (auto shaHash = create_hash_and_give_sha(path, wrtiteThebject); shaHash.has_value())
 		{
 			if (print) std::println(std::cout, "{}", shaHash.value());
 			return EXIT_SUCCESS;
@@ -235,7 +270,7 @@ namespace commands
 		else
 		{
 			std::println(std::cerr, "{}", shaHash.error()); return EXIT_FAILURE;
-		}
+		}*/
 	}
 
 	int ls_tree(std::string args, bool namesOnly)
