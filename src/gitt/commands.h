@@ -61,7 +61,7 @@ namespace commands
 	int commmit(std::string const treeHash, std::optional<std::string> parentTreeHash, std::optional<std::string> message = std::nullopt);
 	namespace utilities
 	{
-		std::expected<std::string, std::string> hash_and_output(std::string const& toHash);
+		std::expected<std::string, std::string> hash_and_save(std::string const& toHash, bool save=true);
 		[[nodiscard]] std::vector<Tree> parse_trees(std::string const& treeHash /*= "3d59ede50c909c5d64b8cdb3cbe31992be17e447"*/);
 	}
 }

@@ -44,13 +44,17 @@ namespace commands
 			return compressed;
 		}
 
-		std::expected<std::string, std::string> hash_and_output(std::string const& toHash)
+		std::expected<std::string, std::string> hash_and_save(std::string const& toHash, bool save)
 		{
 			auto objectHash = utilities::sha1_hash(toHash);
 			auto objectDirPath = constants::objectsDir / objectHash.substr(0, 2);
 			fs::create_directories(objectDirPath);
 			const auto filePath = objectDirPath / objectHash.substr(2);
 			auto compressed = utilities::zlib_compressed_str(toHash);
+
+			if (!save)
+				return objectHash;
+
 			std::ofstream outputHashStream(filePath);
 			if (!outputHashStream)
 				return std::unexpected(std::format("Cannot open the file: \t {}", filePath.string()));
@@ -329,7 +333,7 @@ namespace commands
 		std::string content = std::format("tree {}\n{}{}{}{}\n", treeHash, parentPart, authorPart, commiterPart, msgPart);
 		std::string endValue = "commit " + std::to_string(content.size()) + '\0' + content;
 
-		if (auto commitHash = utilities::hash_and_output(endValue); commitHash)
+		if (auto commitHash = utilities::hash_and_save(endValue, true); commitHash)
 		{
 			std::println(std::cout, "{}", commitHash.value()); return EXIT_SUCCESS;
 		}
@@ -373,12 +377,23 @@ std::expected<std::string, std::string> commands::create_hash_and_give_sha(std::
 			std::string content{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
 			file.close();
 			std::string const header = "blob " + std::to_string(content.size());
-			std::string const raw = header + '\0' + content;
-			std::string const hashedContent = utilities::sha1_hash(raw);
+			std::string const finaHashInput = header + '\0' + content;
+			//std::string const hashedContent = utilities::sha1_hash(raw);
 
-			if (!writeTheObject) return hashedContent;
+			//if (!writeTheObject) return hashedContent;
 
-			std::filesystem::path objectDir = constants::objectsDir / hashedContent.substr(0, 2);
+			if (auto blobHash = utilities::hash_and_save(finaHashInput, writeTheObject); blobHash)
+			{
+				//if (writeTheObject)
+				//	std::println(std::cout, "{}", blobHash.value());
+				return blobHash;
+			}
+			else
+			{
+				std::println(std::cerr, "{}", blobHash.error()); return blobHash;
+			}
+
+			/*std::filesystem::path objectDir = constants::objectsDir / hashedContent.substr(0, 2);
 			std::filesystem::create_directories(objectDir);
 			const auto filePath = objectDir / hashedContent.substr(2);
 			auto compressed = utilities::zlib_compressed_str(raw);
@@ -386,7 +401,7 @@ std::expected<std::string, std::string> commands::create_hash_and_give_sha(std::
 			if (!outputHashStream) return std::unexpected("EXIT_FAILURE");
 			outputHashStream << compressed;
 			outputHashStream.close();
-			return hashedContent;
+			return hashedContent;*/
 
 
 
