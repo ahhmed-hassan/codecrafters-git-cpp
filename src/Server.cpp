@@ -8,6 +8,20 @@
 #include <ranges>
 //#include <view>
 #include "gitt/commands.h"
+template <class Val, class Err>
+int convert_expected(const std::expected<Val, Err>& e, bool print)
+{
+    if (e)
+    {
+        if(print) std::cout << e.value() << "\n";
+        return EXIT_SUCCESS; 
+    }
+    else
+    {
+        std::cerr << e.value() << "\n";
+        return EXIT_FAILURE;
+    }
+};
 
 //#define DEBUG
 #ifndef DEBUG
@@ -61,7 +75,7 @@ int main() {
          
          std::string arg = args.back(); 
          bool writeOption = std::ranges::find(args, "-w")!= args.end();
-         return commands::hash(arg, writeOption, true); 
+         return convert_expected(commands::hash(arg, writeOption, false), true);
      }
      else if (command == "ls-tree")
      {
