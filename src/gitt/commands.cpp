@@ -289,7 +289,8 @@ namespace commands
 		std::string header = "tree ";
 		
 		auto endValue = header + std::to_string(content.size()) + '\0' + content;
-		auto treeHash = utilities::sha1_hash(endValue);
+		return utilities::hash_and_save(endValue, true);
+		/*auto treeHash = utilities::sha1_hash(endValue);
 		auto objectDirPath = constants::objectsDir / treeHash.substr(0, 2);
 		fs::create_directories(objectDirPath);
 		const auto filePath = objectDirPath / treeHash.substr(2);
@@ -299,7 +300,7 @@ namespace commands
 			return std::unexpected("EXIT_FAILURE");
 		outputHashStream << compressed;
 		outputHashStream.close();
-		return treeHash;
+		return treeHash;*/
 
 
 	}
@@ -378,14 +379,9 @@ std::expected<std::string, std::string> commands::create_hash_and_give_sha(std::
 			file.close();
 			std::string const header = "blob " + std::to_string(content.size());
 			std::string const finaHashInput = header + '\0' + content;
-			//std::string const hashedContent = utilities::sha1_hash(raw);
-
-			//if (!writeTheObject) return hashedContent;
 
 			if (auto blobHash = utilities::hash_and_save(finaHashInput, writeTheObject); blobHash)
 			{
-				//if (writeTheObject)
-				//	std::println(std::cout, "{}", blobHash.value());
 				return blobHash;
 			}
 			else
@@ -393,17 +389,7 @@ std::expected<std::string, std::string> commands::create_hash_and_give_sha(std::
 				std::println(std::cerr, "{}", blobHash.error()); return blobHash;
 			}
 
-			/*std::filesystem::path objectDir = constants::objectsDir / hashedContent.substr(0, 2);
-			std::filesystem::create_directories(objectDir);
-			const auto filePath = objectDir / hashedContent.substr(2);
-			auto compressed = utilities::zlib_compressed_str(raw);
-			std::ofstream outputHashStream(filePath);
-			if (!outputHashStream) return std::unexpected("EXIT_FAILURE");
-			outputHashStream << compressed;
-			outputHashStream.close();
-			return hashedContent;*/
-
-
+			
 
 		}
 		catch (const std::bad_alloc& e) { std::println(std::cerr, "{}", e.what()); return std::unexpected(e.what());
