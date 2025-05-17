@@ -225,7 +225,7 @@ namespace commands
 		return 0;
 	}
 
-	int hash(std::filesystem::path const& path, bool wrtiteThebject, bool print)
+	std::expected<std::string, std::string> hash(std::filesystem::path const& path, bool wrtiteThebject, bool print)
 	{
 		try 
 		{
@@ -238,7 +238,7 @@ namespace commands
 				std::string const header = "blob " + std::to_string(content.size());
 				std::string const finaHashInput = header + '\0' + content;
 
-				if (auto blobHash = utilities::hash_and_save(finaHashInput, wrtiteThebject); blobHash)
+				/*if (auto blobHash = utilities::hash_and_save(finaHashInput, wrtiteThebject); blobHash)
 				{
 					if (print) 
 						std::println(std::cout, "{}", blobHash.value());
@@ -248,19 +248,20 @@ namespace commands
 				{
 					std::println(std::cerr, "{}", blobHash.error());
 					return EXIT_FAILURE;
-				}
+				}*/
+				return utilities::hash_and_save(finaHashInput, wrtiteThebject);
 			}
 			catch (const std::bad_alloc& e)
 			{
-				std::println(std::cerr, "{}", e.what());
-				return EXIT_FAILURE;
+				if(print) std::println(std::cerr, "{}", e.what());
+				return std::unexpected{ std::format("{}", e.what()) };
 			}
 
 		}
 		catch (std::filesystem::filesystem_error const& e)
 		{
-			std::println(std::cerr, "Cannot open the file {}", e.what());
-			return EXIT_FAILURE;
+			if(print) std::println(std::cerr, "Cannot open the file {}", e.what());
+			return std::unexpected{ std::format("{}", e.what()) };
 		}
 		
 	}
