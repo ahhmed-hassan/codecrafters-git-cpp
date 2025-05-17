@@ -327,8 +327,9 @@ namespace commands
 		std::string msgPart = msg ? "\n" + msg.value() : "\n";
 
 		std::string content = std::format("tree {}\n{}{}{}{}\n", treeHash, parentPart, authorPart, commiterPart, msgPart);
+		std::string endValue = "commit " + std::to_string(content.size()) + "\0" + content;
 
-		if (auto commitHash = utilities::hash_and_output(content); commitHash)
+		if (auto commitHash = utilities::hash_and_output(endValue); commitHash)
 		{
 			std::println(std::cout, "{}", commitHash.value()); return EXIT_SUCCESS;
 		}
