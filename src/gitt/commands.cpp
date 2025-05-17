@@ -285,24 +285,12 @@ namespace commands
 			{return std::string(t.perm_) + " " + t.name_ + '\0' + t.shaHash_; };
 
 		auto vectorOfContent = trees | std::views::transform(treeConverter);
-		std::string const content = std::ranges::fold_left(vectorOfContent, std::string{}, std::plus<>()); 
+		std::string const content = std::ranges::fold_left(vectorOfContent, std::string{}, std::plus()); 
 		std::string header = "tree ";
 		
 		auto endValue = header + std::to_string(content.size()) + '\0' + content;
 		return utilities::hash_and_save(endValue, true);
-		/*auto treeHash = utilities::sha1_hash(endValue);
-		auto objectDirPath = constants::objectsDir / treeHash.substr(0, 2);
-		fs::create_directories(objectDirPath);
-		const auto filePath = objectDirPath / treeHash.substr(2);
-		auto compressed = utilities::zlib_compressed_str(endValue);
-		std::ofstream outputHashStream(filePath);
-		if (!outputHashStream) 
-			return std::unexpected("EXIT_FAILURE");
-		outputHashStream << compressed;
-		outputHashStream.close();
-		return treeHash;*/
-
-
+	
 	}
 	
 	int write_tree()
