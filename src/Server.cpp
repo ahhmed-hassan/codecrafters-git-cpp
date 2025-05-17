@@ -84,12 +84,10 @@ int main() {
          std::optional<std::string> msg{ std::nullopt };
          if (auto msgOptionIt = std::ranges::find(args, "-m"); msgOptionIt != args.end())
          {
-             auto endOfQuotedStringIT = std::min(args.end(), parentOptionIt);
-             auto test = std::ranges::join_with_view(std::ranges::subrange(std::next(msgOptionIt), args.end()), ' ');
+             auto endOfQuotedStringIT = std::ranges::find_if(args, [](std::string_view s) {return s.ends_with('\"'); });
+             auto test = std::ranges::join_with_view(std::ranges::subrange(std::next(msgOptionIt), endOfQuotedStringIT), ' ');
              auto reconstructedQuotedMsg = std::ranges::fold_left(test, std::string{}, std::plus());
-             //auto reconstructedQuotedMsg = std::ranges::fold_left(std::next(msgOptionIt), args.end(), std::string{},
-              //   [](std::string const& left, std::string const& right) {return left + (left.empty() ? "" : " ") + right; });
-             //std::string  = *std::next(msgOptionIt);
+        
              msg = reconstructedQuotedMsg.starts_with('\"') and reconstructedQuotedMsg.ends_with('\"') ?
                  reconstructedQuotedMsg.substr(1, reconstructedQuotedMsg.size() - 2) :
                  reconstructedQuotedMsg;
