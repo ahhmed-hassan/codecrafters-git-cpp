@@ -15,7 +15,7 @@ namespace commands
 		std::filesystem::path const refsDir = gitDir / "refs";
 		std::filesystem::path const head = gitDir / "HEAD"; 
 		size_t const sha1Size = 20ul;
-		namespace gitConsts 
+		namespace gitTreeConsts 
 		{
 			std::string const regularFile{ "10644" }; 
 			std::string const excutableFile{ "100755" }; 
