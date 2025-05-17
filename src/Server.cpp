@@ -6,7 +6,7 @@
 #include<sstream>
 #include "gitt/commands.h"
 
-//#define DEBUG
+#define DEBUG
 #ifndef DEBUG
 int main(int argc, char *argv[]){
     std::vector<std::string> args(argv, argv + argc);
@@ -23,19 +23,7 @@ int main() {
     size_t argc = args.size();
 
 #endif // DEBUG
-#ifdef DEBUG
-    using namespace std::string_view_literals;
-    using namespace std::chrono;
-    auto now = system_clock::now();
-    auto const x = duration_cast<seconds>(now.time_since_epoch()).count();
-    zoned_time const zt{ current_zone(), now };  // Local time + offset
-    std::println(std::cout, "{:%z}"sv, zt);
-    std::cout<<std::format( "{} {:%z}"sv,
-        x,
-        zt
-    );
-    return 0; 
-#endif // DEBUG
+
 
 
 
@@ -84,13 +72,18 @@ int main() {
      }
      else if (command == "commit-tree")
      {
-         std::string treeHash = *std::next(args.begin());
+         std::string treeHash = *std::next(std::ranges::find(args,"commit-tree"));
          std::optional<std::string> parentTreeHash{ std::nullopt };
          if (auto parentOptionIt = std::ranges::find(args, "-p"); parentOptionIt != args.end())
              parentTreeHash = *std::next(parentOptionIt);
          std::optional<std::string> msg{ std::nullopt };
          if (auto msgOptionIt = std::ranges::find(args, "-m"); msgOptionIt != args.end())
-             msg = *std::next(msgOptionIt);
+         {
+             auto reconstructedQuotedMsg = std::ranges::fold_left(std::next(msgOptionIt), args.end(), std::string{},
+                 [](std::string const& left, std::string const& right) {return left + (left.empty() ? "" : " ") + right; });
+             //std::string  = *std::next(msgOptionIt);
+             msg = reconstructedQuotedMsg.substr(1, reconstructedQuotedMsg.size() - 2);
+         }
 
              
          return commands::commmit(treeHash, parentTreeHash, msg); 
