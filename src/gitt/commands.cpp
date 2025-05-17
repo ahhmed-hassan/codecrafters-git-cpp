@@ -277,13 +277,11 @@ namespace commands
 			return {};
 
 		std::vector<fs::directory_entry> vec{};
-		//std::copy_if(fs::directory_iterator(pathToTree), fs::directory_iterator(), std::back_inserter(vec), 
-		//	[](fs::directory_entry const& de)
-		//	{return !fs::is_directory(de) || (!fs::is_empty(de) && fs::is_directory(de) && de.path().filename() != ".git"); });
+		
 		for (auto const& de : fs::directory_iterator(pathToTree))
 			if (!fs::is_directory(de) || (!fs::is_empty(de) && fs::is_directory(de) && de.path().filename() != ".git"))
 				vec.push_back(de);
-		std::ranges::sort(vec, {}, &fs::directory_entry::path);
+		std::ranges::sort(vec, {}, [](const fs::directory_entry& de) {return de.path().filename(); });
 		struct HashAndEntry { std::string hash{}; fs::directory_entry e{}; };
 		//auto hash_func = [](fs::directory_entry const& de){ fs::is_directory(de)? }
 		auto entriesHashe = std::ranges::transform_view(vec, [](fs::directory_entry const& e)-> HashAndEntry {
@@ -306,16 +304,12 @@ namespace commands
 		auto treeConverter = [](const Tree& t) ->std::string
 			{return std::string(t.perm_) + " " + t.name_ + '\0' + t.shaHash_; };
 
-		auto vectorOfContent = trees | std::views::transform(treeConverter);// | std::ranges::to<std::vector>();
+		auto vectorOfContent = trees | std::views::transform(treeConverter);
 		std::string const content = std::ranges::fold_left(vectorOfContent, std::string{}, std::plus<>()); 
 		std::string header = "tree ";
-		//auto content = trees | std::views::transform(treeConverter);
-		//std::string content{}; 
-		//for (auto&& x : vectorOfContent)
-			//content += x;
-
+		
 		auto endValue = header + std::to_string(content.size()) + '\0' + content;
-		auto treeHash = utilities::sha1_hash(content);
+		auto treeHash = utilities::sha1_hash(endValue);
 		auto objectDirPath = constants::objectsDir / treeHash.substr(0, 2);
 		fs::create_directories(objectDirPath);
 		const auto filePath = objectDirPath / treeHash.substr(2);
