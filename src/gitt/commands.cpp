@@ -271,7 +271,7 @@ namespace commands
 		return EXIT_SUCCESS;
 	}
 
-	std::expected<std::string,std::string> write_tree_and_get_hash(fs::path const& pathToTree)
+	std::expected<std::string,std::string> write_tree_and_get_hash(fs::path const& pathToTree) noexcept
 	{
 		if (fs::is_empty(pathToTree) &&fs::is_directory(pathToTree))
 			return {};
@@ -295,6 +295,7 @@ namespace commands
 			{
 				return HashAndEntry{ utilities::hexToByteString(hash.value()),e};
 			}
+			
 			});
 
 		auto trees = entriesHashe
@@ -359,7 +360,7 @@ namespace commands
 
 }
 
-std::expected<std::string, std::string> commands::create_hash_and_give_sha(std::filesystem::path const& path, bool writeTheObject)
+std::expected<std::string, std::string> commands::create_hash_and_give_sha(std::filesystem::path const& path, bool writeTheObject) noexcept
 {
 	try
 	{

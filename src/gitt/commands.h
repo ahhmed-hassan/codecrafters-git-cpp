@@ -45,7 +45,7 @@ namespace commands
 	int cat_command(std::string option, std::string args);
 	int hash_command(std::filesystem::path const& path, bool wrtiteThebject, bool print = false);
 	
-	std::expected<std::string, std::string> create_hash_and_give_sha(std::filesystem::path const& path, bool writeTheObject);
+	std::expected<std::string, std::string> create_hash_and_give_sha(std::filesystem::path const& path, bool writeTheObject) noexcept;
 	
 	int ls_tree_command(std::string args, bool namesOnly); 
 	int write_tree_command();
