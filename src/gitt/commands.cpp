@@ -253,7 +253,7 @@ namespace commands
 		}
 		else
 		{
-			std::println(std::cout, "{}", shaHash.error()); return EXIT_FAILURE; 
+			std::println(std::cerr, "{}", shaHash.error()); return EXIT_FAILURE; 
 		}
 	}
 

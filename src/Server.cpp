@@ -57,7 +57,7 @@ int main() {
          
          std::string arg = args.back(); 
          bool writeOption = std::ranges::find(args, "-w")!= args.end();
-         return commands::hash_command(arg, writeOption); 
+         return commands::hash_command(arg, writeOption, true); 
      }
      else if (command == "ls-tree")
      {
