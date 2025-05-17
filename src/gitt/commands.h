@@ -5,15 +5,23 @@
 #include <vector>
 #include <map>
 
+
 #include <expected>
 namespace commands
 {
-	namespace constants
+	/*namespace constants
 	{
 		std::filesystem::path const gitDir = ".git" ;
 		std::filesystem::path const objectsDir = gitDir / "objects";
 		std::filesystem::path const refsDir = gitDir / "refs";
 		std::filesystem::path const head = gitDir / "HEAD"; 
+		namespace hardCodedCommitVals 
+		{
+			std::string const committerName{ "FooBar" }; 
+			std::string const committerMail{ "FooBar@gmail.com" }; 
+			std::string const authorName{ committerName };
+			std::string const authorMail{ committerMail };
+		}
 		size_t const sha1Size = 20ul;
 		namespace gitTreeConsts 
 		{
@@ -31,7 +39,7 @@ namespace commands
 				{regularFile, Permession::regularFile},{excutableFile, Permession::executableFile},{directory, Permession::directory},{symbolink, Permession::symbollink} 
 			};
 		}
-	}
+	}*/
 	struct Tree
 	{
 		std::string perm_{}; 
@@ -41,16 +49,19 @@ namespace commands
 		Tree(std::string_view perm, std::string_view name, std::string_view hash);
 		Tree(std::filesystem::directory_entry const& de, std::string const& hash); 
 	};
-	int init_command();
-	int cat_command(std::string option, std::string args);
-	int hash_command(std::filesystem::path const& path, bool wrtiteThebject, bool print = false);
+	int init();
+	int cat(std::string option, std::string args);
+	int hash(std::filesystem::path const& path, bool wrtiteThebject, bool print = false);
 	
-	std::expected<std::string, std::string> create_hash_and_give_sha(std::filesystem::path const& path, bool writeTheObject) noexcept;
+	[[nodiscard]] auto create_hash_and_give_sha(std::filesystem::path const& path, bool writeTheObject) noexcept
+		-> std::expected<std::string, std::string>;
 	
-	int ls_tree_command(std::string args, bool namesOnly); 
-	int write_tree_command();
+	int ls_tree(std::string args, bool namesOnly); 
+	int write_tree();
+	int commmit(std::string const treeHash, std::optional<std::string> parentTreeHash, std::optional<std::string> message = std::nullopt);
 	namespace utilities
 	{
-		std::vector<Tree> parse_trees(std::string const& treeHash = "3d59ede50c909c5d64b8cdb3cbe31992be17e447");
+		std::expected<std::string, std::string> hash_and_output(std::string const& toHash);
+		[[nodiscard]] std::vector<Tree> parse_trees(std::string const& treeHash /*= "3d59ede50c909c5d64b8cdb3cbe31992be17e447"*/);
 	}
 }
