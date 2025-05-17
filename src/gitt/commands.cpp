@@ -348,10 +348,10 @@ namespace commands
 		std::string const name = de.path().filename().string();
 		auto get_mode = [](fs::directory_entry const& e) -> std::string
 			{
-				if (fs::is_directory(e)) return "40000";
-				if (fs::is_regular_file(e)) return "100644";
-				else if (fs::is_symlink(e)) return "120000";
-				else return "100755";
+				if (fs::is_directory(e)) return constants::gitTreeConsts::directory;
+				if (fs::is_regular_file(e)) return constants::gitTreeConsts::regularFile;
+				else if (fs::is_symlink(e)) return constants::gitTreeConsts::symbolink;
+				else return constants::gitTreeConsts::excutableFile;
 			};
 		name_ = name; perm_ = get_mode(de); shaHash_ = hash; 
 	}
