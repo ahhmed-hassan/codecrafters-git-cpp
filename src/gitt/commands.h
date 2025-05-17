@@ -17,9 +17,9 @@ namespace commands
 		size_t const sha1Size = 20ul;
 		namespace gitTreeConsts 
 		{
-			std::string const regularFile{ "10644" }; 
+			std::string const regularFile{ "100644" }; 
 			std::string const excutableFile{ "100755" }; 
-			std::string const symbolink{ "12000" }; 
+			std::string const symbolink{ "120000" }; 
 			std::string const directory{ "40000" }; 
 			 
 			enum struct Permession
