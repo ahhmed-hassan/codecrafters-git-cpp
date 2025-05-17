@@ -262,15 +262,7 @@ namespace commands
 			std::println(std::cerr, "Cannot open the file {}", e.what());
 			return EXIT_FAILURE;
 		}
-		/*if (auto shaHash = create_hash_and_give_sha(path, wrtiteThebject); shaHash.has_value())
-		{
-			if (print) std::println(std::cout, "{}", shaHash.value());
-			return EXIT_SUCCESS;
-		}
-		else
-		{
-			std::println(std::cerr, "{}", shaHash.error()); return EXIT_FAILURE;
-		}*/
+		
 	}
 
 	int ls_tree(std::string args, bool namesOnly)
@@ -374,8 +366,7 @@ namespace commands
 
 	Tree::Tree(std::filesystem::directory_entry const& de, std::string const& hash)
 	{
-		//if (de.path().string().empty())
-			//int x = 5;
+
 		std::string const name = de.path().filename().string();
 		auto get_mode = [](fs::directory_entry const& e) -> std::string
 			{
