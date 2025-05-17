@@ -321,13 +321,13 @@ namespace commands
 		zoned_time zt{ current_zone(), now };  // Local time + offset
 		auto epochSeconds = duration_cast<seconds>(now.time_since_epoch()).count();
 
-		std::string parentPart = parentTreeHas ? std::format("parent {}"sv, parentTreeHas.value()) : std::string{}; 
-		std::string commiterPart = std::format("commiter {} <{}> {} {:%z}\n", committerName, committerMail, epochSeconds, zt);
-		std::string authorPart = std::format("author{} <{}> {} {:%z}\n", authorName, authorMail, epochSeconds, zt);
-		std::string msgPart = msg ? "\n" + msg.value() : "\n";
+		std::string parentPart = parentTreeHas ? std::format("parent {}\n"sv, parentTreeHas.value()) : std::string{}; 
+		std::string commiterPart = std::format("committer {} <{}> {} {:%z}\n", committerName, committerMail, epochSeconds, zt);
+		std::string authorPart = std::format("author {} <{}> {} {:%z}\n", authorName, authorMail, epochSeconds, zt);
+		std::string msgPart = msg ? "\n" + msg.value() : "";
 
 		std::string content = std::format("tree {}\n{}{}{}{}\n", treeHash, parentPart, authorPart, commiterPart, msgPart);
-		std::string endValue = "commit " + std::to_string(content.size()) + "\0" + content;
+		std::string endValue = "commit " + std::to_string(content.size()) + '\0' + content;
 
 		if (auto commitHash = utilities::hash_and_output(endValue); commitHash)
 		{
