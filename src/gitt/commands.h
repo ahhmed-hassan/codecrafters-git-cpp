@@ -21,7 +21,7 @@ namespace commands
 	};
 	int init();
 	int cat(std::string option, std::string args);
-	std::expected<std::string, std::string> hash(std::filesystem::path const& path, bool wrtiteThebject, bool print = false);
+	std::expected<std::string, std::string> hash(std::filesystem::path const& path, bool wrtiteThebject, bool print);
 	
 	[[nodiscard]] auto create_hash_and_give_sha(std::filesystem::path const& path, bool writeTheObject) noexcept
 		-> std::expected<std::string, std::string>;
