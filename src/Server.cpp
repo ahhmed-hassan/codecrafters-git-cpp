@@ -85,7 +85,7 @@ int main() {
          if (auto msgOptionIt = std::ranges::find(args, "-m"); msgOptionIt != args.end())
          {
              auto endOfQuotedStringIT = std::min(args.end(), parentOptionIt);
-             auto test = std::ranges::join_with_view(std::ranges::subrange(std::next(msgOptionIt), endOfQuotedStringIT), ' ');
+             auto test = std::ranges::join_with_view(std::ranges::subrange(std::next(msgOptionIt), args.end()), ' ');
              auto reconstructedQuotedMsg = std::ranges::fold_left(test, std::string{}, std::plus());
              //auto reconstructedQuotedMsg = std::ranges::fold_left(std::next(msgOptionIt), args.end(), std::string{},
               //   [](std::string const& left, std::string const& right) {return left + (left.empty() ? "" : " ") + right; });
