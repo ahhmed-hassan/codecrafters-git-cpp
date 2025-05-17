@@ -83,7 +83,9 @@ int main() {
              auto reconstructedQuotedMsg = std::ranges::fold_left(std::next(msgOptionIt), args.end(), std::string{},
                  [](std::string const& left, std::string const& right) {return left + (left.empty() ? "" : " ") + right; });
              //std::string  = *std::next(msgOptionIt);
-             msg = reconstructedQuotedMsg;//.substr(1, reconstructedQuotedMsg.size() - 2);
+             msg = reconstructedQuotedMsg.starts_with('\"') and reconstructedQuotedMsg.ends_with('\"') ?
+                 reconstructedQuotedMsg.substr(1, reconstructedQuotedMsg.size() - 2) :
+                 reconstructedQuotedMsg;
          }
 
              
