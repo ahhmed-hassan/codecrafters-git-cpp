@@ -23,6 +23,19 @@ int main() {
     size_t argc = args.size();
 
 #endif // DEBUG
+#ifdef DEBUG
+    using namespace std::string_view_literals;
+    using namespace std::chrono;
+    auto now = system_clock::now();
+    auto const x = duration_cast<seconds>(now.time_since_epoch()).count();
+    zoned_time const zt{ current_zone(), now };  // Local time + offset
+    std::println(std::cout, "{:%z}"sv, zt);
+    std::cout<<std::format( "{} {:%z}"sv,
+        x,
+        zt
+    );
+    return 0; 
+#endif // DEBUG
 
 
 
@@ -45,29 +58,42 @@ int main() {
 
 
      if (command == "init") {
-         return commands::init_command();
+         return commands::init();
      }
      else if (command == "cat-file") {
          std::string option = args[2]; 
          std::string arg = args[3]; 
-         return commands::cat_command(args[2], args[3]);
+         return commands::cat(args[2], args[3]);
      }
      else if (command == "hash-object")
      {
          
          std::string arg = args.back(); 
          bool writeOption = std::ranges::find(args, "-w")!= args.end();
-         return commands::hash_command(arg, writeOption, true); 
+         return commands::hash(arg, writeOption, true); 
      }
      else if (command == "ls-tree")
      {
          std::string arg = args.back(); 
          bool namesOnly = std::ranges::find(args, "--name-only") != args.end(); 
-         return commands::ls_tree_command(arg, namesOnly); 
+         return commands::ls_tree(arg, namesOnly); 
      }
      else if (command == "write-tree")
      {
-         return commands::write_tree_command();
+         return commands::write_tree();
+     }
+     else if (command == "commit-tree")
+     {
+         std::string treeHash = *std::next(args.begin());
+         std::optional<std::string> parentTreeHash{ std::nullopt };
+         if (auto parentOptionIt = std::ranges::find(args, "-p"); parentOptionIt != args.end())
+             parentTreeHash = *std::next(parentOptionIt);
+         std::optional<std::string> msg{ std::nullopt };
+         if (auto msgOptionIt = std::ranges::find(args, "-m"); msgOptionIt != args.end())
+             msg = *std::next(msgOptionIt);
+
+             
+         return commands::commmit(treeHash, parentTreeHash, msg); 
      }
      else {
          std::cerr << "Unknown command " << command << '\n';

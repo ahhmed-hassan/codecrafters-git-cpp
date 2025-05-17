@@ -8,7 +8,8 @@
 #include<ranges>
 #include <functional>
 #include <numeric>
-
+#include <chrono>
+#include "constants.h"
 
 #include <openssl/sha.h>
 
@@ -41,6 +42,22 @@ namespace commands
 			compress(reinterpret_cast<Bytef*>(&compressed[0]), &compressedSize, reinterpret_cast<Bytef const*>(input.data()), static_cast<uLong>(input.size()));
 			compressed.resize(compressedSize);
 			return compressed;
+		}
+
+		std::expected<std::string, std::string> hash_and_output(std::string const& toHash)
+		{
+			auto objectHash = utilities::sha1_hash(toHash);
+			auto objectDirPath = constants::objectsDir / objectHash.substr(0, 2);
+			fs::create_directories(objectDirPath);
+			const auto filePath = objectDirPath / objectHash.substr(2);
+			auto compressed = utilities::zlib_compressed_str(toHash);
+			std::ofstream outputHashStream(filePath);
+			if (!outputHashStream)
+				return std::unexpected(std::format("Cannot open the file: \t {}", filePath.string()));
+			outputHashStream << compressed;
+			outputHashStream.close();
+			return objectHash;
+
 		}
 		std::vector<Tree> parse_trees(std::string const& treeHash)
 		{
@@ -142,8 +159,11 @@ namespace commands
 
 			return byteStr;
 		}
-	}
-	int init_command()
+	
+		
+
+}
+	int init()
 	{
 
 		try {
@@ -171,7 +191,7 @@ namespace commands
 
 	}
 
-	int cat_command(std::string option, std::string args)
+	int cat(std::string option, std::string args)
 	{
 		if (option != "-p") { std::cerr << "Unknown command!\n"; return EXIT_FAILURE; }
 		std::filesystem::path const blobPath = constants::objectsDir / std::filesystem::path(args.substr(0, 2)) / args.substr(2);
@@ -201,63 +221,20 @@ namespace commands
 		return 0;
 	}
 
-	int hash_command(std::filesystem::path const& path, bool wrtiteThebject, bool print)
+	int hash(std::filesystem::path const& path, bool wrtiteThebject, bool print)
 	{
-
-		/*try
+		if (auto shaHash = create_hash_and_give_sha(path, wrtiteThebject); shaHash.has_value())
 		{
-			std::ifstream file(path);
-			try
-			{
-
-				std::string content{ std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>() };
-				file.close();
-				std::string const header = "blob " + std::to_string(content.size());
-				std::string const raw = header + '\0' + content;
-				std::string const hashedContent = utilities::sha1_hash(raw);
-				if (print)
-				{
-					std::println(std::cout, "{}", hashedContent);
-				}
-
-				if (!wrtiteThebject) return EXIT_SUCCESS;
-
-				std::filesystem::path objectDir = constants::objectsDir / hashedContent.substr(0, 2);
-				std::filesystem::create_directories(objectDir);
-				const auto filePath = objectDir / hashedContent.substr(2);
-				auto compressed = utilities::zlib_compressed_str(raw);
-				std::ofstream outputHashStream(filePath);
-				if (!outputHashStream) return EXIT_FAILURE;
-				outputHashStream << compressed;
-				outputHashStream.close();
-				return EXIT_SUCCESS;
-
-
-
-			}
-			catch (const std::bad_alloc& e) { std::println(std::cerr, "{}", e.what()); }
-
-		}
-		catch (const std::filesystem::filesystem_error& e)
-		{
-			std::println(std::cerr, "{}", e.what());
-		}
-
-		return EXIT_FAILURE;*/
-		auto shaHash = create_hash_and_give_sha(path, wrtiteThebject); 
-		if (shaHash.has_value())
-		{
-			
-			if(print) std::println(std::cout, "{}", shaHash.value());
+			if (print) std::println(std::cout, "{}", shaHash.value());
 			return EXIT_SUCCESS;
 		}
 		else
 		{
-			std::println(std::cerr, "{}", shaHash.error()); return EXIT_FAILURE; 
+			std::println(std::cerr, "{}", shaHash.error()); return EXIT_FAILURE;
 		}
 	}
 
-	int ls_tree_command(std::string args, bool namesOnly)
+	int ls_tree(std::string args, bool namesOnly)
 	{
 		std::vector<Tree> entries{ utilities::parse_trees(args) };
 		auto tree_printer = [](const Tree& t) {return std::format("{} {} {}", t.perm_, t.name_, t.shaHash_); };
@@ -266,8 +243,7 @@ namespace commands
 		{
 			std::println(std::cout, "{}", x); 
 		}
-		
-		//for()
+
 		return EXIT_SUCCESS;
 	}
 
@@ -283,7 +259,6 @@ namespace commands
 				vec.push_back(de);
 		std::ranges::sort(vec, {}, [](const fs::directory_entry& de) {return de.path().filename(); });
 		struct HashAndEntry { std::string hash{}; fs::directory_entry e{}; };
-		//auto hash_func = [](fs::directory_entry const& de){ fs::is_directory(de)? }
 		auto entriesHashe = std::ranges::transform_view(vec, [](fs::directory_entry const& e)-> HashAndEntry {
 			if (fs::is_directory(e)) {
 				if (auto hash = write_tree_and_get_hash(e.path()); hash.has_value())
@@ -325,7 +300,7 @@ namespace commands
 
 	}
 	
-	int write_tree_command()
+	int write_tree()
 	{
 		if (auto res = write_tree_and_get_hash(fs::path(".")); res.has_value())
 		{
@@ -334,6 +309,32 @@ namespace commands
 		else 
 		{
 			std::println(std::cout, "{}", res.error()); return EXIT_FAILURE; 
+		}
+	}
+
+	int commmit(std::string const treeHash, std::optional<std::string> parentTreeHas, std::optional<std::string> msg)
+	{
+		using namespace constants::hardCodedCommitVals;
+		using namespace std::chrono;
+
+		auto now = system_clock::now();
+		zoned_time zt{ current_zone(), now };  // Local time + offset
+		auto epochSeconds = duration_cast<seconds>(now.time_since_epoch()).count();
+
+		std::string parentPart = parentTreeHas ? std::format("parent {}"sv, parentTreeHas.value()) : std::string{}; 
+		std::string commiterPart = std::format("commiter {} <{}> {} {:%z}\n", committerName, committerMail, epochSeconds, zt);
+		std::string authorPart = std::format("author{} <{}> {} {:%z}\n", authorName, authorMail, epochSeconds, zt);
+		std::string msgPart = msg ? "\n" + msg.value() : "\n";
+
+		std::string content = std::format("tree {}\n{}{}{}{}\n", treeHash, parentPart, authorPart, commiterPart, msgPart);
+
+		if (auto commitHash = utilities::hash_and_output(content); commitHash)
+		{
+			std::println(std::cout, "{}", commitHash.value()); return EXIT_SUCCESS;
+		}
+		else
+		{
+			std::println(std::cerr, "{}", commitHash.error()); return EXIT_FAILURE;
 		}
 	}
 	
@@ -373,10 +374,6 @@ std::expected<std::string, std::string> commands::create_hash_and_give_sha(std::
 			std::string const header = "blob " + std::to_string(content.size());
 			std::string const raw = header + '\0' + content;
 			std::string const hashedContent = utilities::sha1_hash(raw);
-			/*if (print)
-			{
-				std::println(std::cout, "{}", hashedContent);
-			}*/
 
 			if (!writeTheObject) return hashedContent;
 
