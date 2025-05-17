@@ -298,9 +298,9 @@ namespace commands
 					return HashAndEntry{utilities::hexToByteString(hash.value()), e};
 				}
 			}
-			else if (auto hash = create_hash_and_give_sha(e.path(), true); hash.has_value())
+			else if (auto shaHash = hash(e.path(), true, false); shaHash.has_value())
 			{
-				return HashAndEntry{ utilities::hexToByteString(hash.value()),e};
+				return HashAndEntry{ utilities::hexToByteString(shaHash.value()),e};
 			}
 			
 			});
