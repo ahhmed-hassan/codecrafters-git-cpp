@@ -1,0 +1,83 @@
+#include <string>
+#include <regex>
+#include <asio.hpp>
+#include <cpr/cpr.h>
+#include "clone.h"
+
+std::string clone::get_info_refs(const std::string& url)
+{
+    std::string full_url = std::format("{}/info/refs?service=git-upload-pack", url);
+    cpr::Response r = cpr::Get(cpr::Url{ full_url });
+
+    if (r.status_code != 200) {
+        throw std::runtime_error("HTTP request failed");
+    }
+    return r.text;
+}
+
+std::vector<clone::Ref> clone::parse_info_refs(std::string const& getResponse)
+{
+    std::vector<Ref> refs;
+    std::istringstream iss(getResponse);
+    std::string line;
+
+    while (std::getline(iss, line)) {
+        // Skip flush packets and service header
+        if (line.size() < 4/* || line.substr(0, 4) == "0000"*/) continue;
+        if (line.find("# service=") != std::string::npos) continue;
+
+        // Extract pkt-line length (first 4 chars as hex)
+        uint32_t length;
+        std::stringstream len_ss;
+        len_ss << std::hex << line.substr(0, 4);
+        len_ss >> length;
+
+        if (length == 0)
+        {
+            if (line.size() > 4)
+            {
+                line = line.substr(4);
+            }
+            else
+                continue;
+        }
+        else
+            line = line.substr(4, length - 4);
+
+        // Extract actual data (after 4-byte header)
+        //std::string data = line.substr(4, length - 4);
+
+        // Parse into GitRef
+        GitRef ref;
+        size_t first_space = line.find(' ');
+        size_t null_pos = line.find('\0');
+
+        ref.object_id = line.substr(0, first_space);
+        ref.name = line.substr(first_space + 1,
+            (null_pos != std::string::npos) ? null_pos - first_space - 1 : std::string::npos);
+
+        // Parse capabilities (only for HEAD)
+        if (/*ref.name == "HEAD" &&*/ null_pos != std::string::npos || line.contains("HEAD")) {
+            HeadRef headRef{ .ref = ref };
+            std::string caps_str = line.substr(null_pos + 1);
+            std::istringstream caps_iss(caps_str);
+            std::string cap;
+            while (std::getline(caps_iss, cap, ' ')) {
+                headRef.capabilities.push_back(cap);
+            }
+            refs.push_back(headRef); continue; 
+        }
+
+        refs.push_back(ref);
+    }
+
+    return refs;
+}
+
+std::string clone::get_head_sha(std::string const& url)
+{
+    auto response = get_info_refs(url); 
+    auto refs = clone::parse_info_refs(response); 
+    auto headRef = std::get<HeadRef>(*refs.begin());
+    return headRef.ref.object_id;
+}
