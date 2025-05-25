@@ -8,7 +8,7 @@ file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.hpp)
 
 find_package(OpenSSL REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(CPR REQUIRED)
+find_package(CPR CONFIG REQUIRED)
 
 add_executable(git ${SOURCE_FILES})
 
