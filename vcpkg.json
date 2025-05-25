@@ -1,6 +1,8 @@
 {
   "dependencies": [
+    "asio",
+    "openssl",
     "zstr",
-    "openssl"
+    "cpr"
   ]
 }
