@@ -6,6 +6,7 @@
 #include<sstream>
 #include <algorithm>
 #include <ranges>
+#include "gitt/clone.h"
 //#include <view>
 #include "gitt/commands.h"
 template <class Val, class Err>
@@ -27,6 +28,13 @@ int convert_expected(const std::expected<Val, Err>& e, bool print)
 #ifndef DEBUG
 int main(int argc, char *argv[]){
     std::vector<std::string> args(argv, argv + argc);
+    auto h = clone::get_info_refs();
+    std::cout << h<<"\n";
+    using namespace std::string_view_literals;
+    std::cout<< "\n\n" <<clone::get_head_sha() << "\n";
+   
+    return 0; 
+
 #else
 #include<sstream>
 int main() {

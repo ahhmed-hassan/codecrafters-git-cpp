@@ -20,9 +20,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Server.cpp" />
+    <ClCompile Include="clone.cpp" />
     <ClCompile Include="commands.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="clone.h" />
     <ClInclude Include="commands.h" />
     <ClInclude Include="constants.h" />
   </ItemGroup>
