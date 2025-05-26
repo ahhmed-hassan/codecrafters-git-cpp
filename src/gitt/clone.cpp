@@ -36,7 +36,7 @@ std::vector<clone::Ref> clone::parse_info_refs(std::string const& getResponse)
         {
             if (line.size() > 4)
             {
-                line = line.substr(4);
+                line = line.substr(8);
             }
             else
                 continue;
