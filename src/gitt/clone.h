@@ -29,5 +29,6 @@ namespace clone
     HeadRef get_head(std::string const& url); 
     std::string build_negotiation_body(HeadRef head);
     std::string fetch_packfile(const std::string& url,  HeadRef head); 
+    std::string extract_packFile(std::string const& packData); 
 
 }
