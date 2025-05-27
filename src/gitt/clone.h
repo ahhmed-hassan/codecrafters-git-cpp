@@ -26,7 +26,8 @@ namespace clone
     std::string get_info_refs(const std::string& url= "https://github.com/i27ae15/git.git");
     std::vector<Ref> parse_info_refs(std::string const& getResponse);
     std::string get_head_sha(std::string const& url = "https://github.com/i27ae15/git.git");
-    std::string build_negotiation_body(const std::string& head_sha);
-    std::string fetch_packfile(const std::string& url,  std::string head_sha); 
+    HeadRef get_head(std::string const& url); 
+    std::string build_negotiation_body(HeadRef head);
+    std::string fetch_packfile(const std::string& url,  HeadRef head); 
 
 }

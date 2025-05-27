@@ -86,9 +86,19 @@ namespace clone
         return headRef.ref.object_id;
     }
 
-    std::string build_negotiation_body(const std::string& head_sha) {
+    HeadRef get_head(std::string const& url)
+    {
+        auto response = get_info_refs(url);
+        auto refs = clone::parse_info_refs(response);
+        auto headRef = std::get<HeadRef>(*refs.begin());
+        return headRef;
+    }
+
+    std::string build_negotiation_body(HeadRef head) {
         // Format want/done commands with pkt-line encoding
-        std::string want = std::format("want {}\n", head_sha);
+        auto capsRange = std::ranges::join_with_view(head.capabilities, ' ');
+        auto reconstructedQuotedMsg = std::ranges::fold_left(capsRange, std::string{}, std::plus());
+        std::string want = std::format("want {} {}\n", head.ref.object_id, reconstructedQuotedMsg);
         std::string done = "done\n";
 
         // Convert to pkt-line (4-byte hex length + data)
@@ -99,9 +109,9 @@ namespace clone
         return format_pkt_line(want) + format_pkt_line(done) + "0000"; // Flush packet
     }
 
-    std::string fetch_packfile(const std::string& url,  std::string head_sha) {
+    std::string fetch_packfile(const std::string& url,  HeadRef head) {
         std::string upload_pack_url = std::format("{}/git-upload-pack", url);
-        std::string body = build_negotiation_body(head_sha);
+        std::string body = build_negotiation_body(head);
 
         cpr::Response r = cpr::Post(
             cpr::Url{ upload_pack_url },
