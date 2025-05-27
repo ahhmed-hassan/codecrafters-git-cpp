@@ -2,7 +2,6 @@
 #include <regex>
 #include <asio.hpp>
 #include <cpr/cpr.h>
-#include <iostream>
 #include "clone.h"
 
 namespace clone
@@ -127,40 +126,8 @@ namespace clone
         if (r.status_code != 200) {
             throw std::runtime_error("Failed to fetch packfile");
         }
-        auto h =  extract_packFile( r.text);
-        return h; 
+        return r.text;
       
-    }
-
-    std::string extract_packFile(std::string const& packData)
-    {
-      
-            std::string packfile;
-            size_t pos = 0;
-
-            while (pos < packData.size()) {
-                // Read pkt-line header
-                std::string header = packData.substr(pos, 4);
-                pos += 4;
-
-                uint32_t length = std::stoul(header, nullptr, 16);
-                if (length == 0) break; // Flush packet
-
-                // Extract data (length includes 4-byte header)
-                std::string data = packData.substr(pos, length - 4);
-                pos += length - 4;
-
-                // Handle sideband (first byte is band ID)
-                if (data[0] == '\x01') { // Main data
-                    packfile += data.substr(1);
-                }
-                else if (data[0] == '\x02') { // Progress messages
-                    std::cerr << data.substr(1);
-                }
-            }
-
-            return packfile;
-        
     }
 
 }
