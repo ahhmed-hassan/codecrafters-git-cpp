@@ -98,8 +98,8 @@ namespace clone
     std::string build_negotiation_body(HeadRef head) {
         // Format want/done commands with pkt-line encoding
         auto capsRange = std::ranges::join_with_view(head.capabilities, ' ');
-        auto reconstructedQuotedMsg = std::ranges::fold_left(capsRange, std::string{}, std::plus());
-        std::string want = std::format("want {} {}\n", head.ref.object_id, reconstructedQuotedMsg);
+        auto caps = std::ranges::fold_left(capsRange, std::string{}, std::plus());
+        std::string want = std::format("want {} {}\n", head.ref.object_id, caps);
         std::string done = "done\n";
 
         // Convert to pkt-line (4-byte hex length + data)
@@ -133,7 +133,7 @@ namespace clone
     }
 
     std::string extract_packFile(std::string const& packData)
-    {
+        {
       
             std::string packfile;
             size_t pos = 0;
