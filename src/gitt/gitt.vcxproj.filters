@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Clone">
+      <UniqueIdentifier>{1b1bae2b-7761-469e-8641-a531c3ffe193}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Clone">
+      <UniqueIdentifier>{5fed6293-e6bc-4b22-be08-393d4afad734}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Server.cpp">
@@ -22,7 +28,10 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="clone.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Clone</Filter>
+    </ClCompile>
+    <ClCompile Include="infrastructure.cpp">
+      <Filter>Source Files\Clone</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -33,7 +42,10 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="clone.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Clone</Filter>
+    </ClInclude>
+    <ClInclude Include="infrastructure.h">
+      <Filter>Header Files\Clone</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
