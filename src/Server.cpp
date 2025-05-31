@@ -29,17 +29,18 @@ int convert_expected(const std::expected<Val, Err>& e, bool print)
 #ifndef DEBUG
 int main(int argc, char* argv[]) {
 	std::vector<std::string> args(argv, argv + argc);
-	auto const url = "https://github.com/git/git";
-	auto h = clone::get_info_refs(url);
+	auto url = "https://github.com/git/git";
+	url = "https://github.com/git/git-reference";
 	//std::cout << h<<"\n";https
 	auto g = clone::parse_info_refs(clone::get_info_refs());
 	using namespace std::string_view_literals;
 	auto head = clone::get_head(url);
-	std::println(std::cout, "{}", head); 
+	clone::fetch_packfile(url, head);
+	//std::println(std::cout, "{}"sv, head.ref.object_id); 
 	auto shaHead = clone::get_head_sha(url);
 	//std::cout<< "\n\n" <<clone::get_head_sha() << "\n";
-	std::cout << clone::fetch_packfile(url, head) <<"\n\n";
-	std::println(std::cout, "{}", clone::extract_packFile(""));
+	//std::cout << clone::fetch_packfile(url, head) <<"\n\n";
+	//std::println(std::cout, "{}", clone::extract_packFile(""));
 	return 0;
 
 #else

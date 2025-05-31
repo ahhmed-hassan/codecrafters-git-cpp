@@ -30,7 +30,6 @@ namespace clone
         while (std::getline(iss, line)) {
             // Skip flush packets and service header
             if (line == header) continue;
-            //if (line.find("# service=") != std::string::npos) continue;
 
             // Extract pkt-line length (first 4 chars as hex)
             uint32_t length;
@@ -90,8 +89,10 @@ namespace clone
     HeadRef get_head(std::string const& url)
     {
         auto response = get_info_refs(url);
+        std::println(std::cout, "GET response\n--------------\n{}", response); 
         auto refs = clone::parse_info_refs(response);
         auto headRef = std::get<HeadRef>(*refs.begin());
+        std::println(std::cout, "HEAD SHA\n----------\n{}", headRef.ref.object_id);
         return headRef;
     }
 
@@ -111,9 +112,9 @@ namespace clone
     }
 
     std::string fetch_packfile(const std::string& url,  HeadRef head) {
-        std::string upload_pack_url = std::format("{}/git-upload-pack", url);
+        /*std::string upload_pack_url = std::format("{}/git-upload-pack", url);
         std::string body = build_negotiation_body(head);
-
+        std::println(std::cout, "Body\n-------------\n{}", body); 
         cpr::Response r = cpr::Post(
             cpr::Url{ upload_pack_url },
             cpr::Body{ body },
@@ -123,13 +124,33 @@ namespace clone
             } 
             
         );
+        std::println(std::cout, "Content\n------\n {}", r.text); 
 
         if (r.status_code != 200) {
             throw std::runtime_error("Failed to fetch packfile");
         }
-        auto h =  extract_packFile( r.text);
-        return h; 
-      
+        return r.text; 
+      */
+
+        std::string upload_pack_url = url + "/git-upload-pack";
+
+        // 2. Minimal body without capabilities
+        std::string body = std::format("0032want {}\n00000009done\n", head.ref.object_id);
+
+        // 3. Simplified headers
+        cpr::Response r = cpr::Post(
+            cpr::Url{ upload_pack_url },
+            cpr::Body{ body },
+            cpr::Header{
+                {"Content-Type", "application/x-git-upload-pack-request"}
+                // No "Accept" header!
+            }
+        );
+
+        if (r.status_code != 200 || r.text.empty()) {
+            throw std::runtime_error("Failed to fetch packfile");
+        }
+        return r.text;
     }
 
     std::string extract_packFile(std::string const& packData)
