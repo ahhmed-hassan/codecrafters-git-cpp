@@ -23,12 +23,14 @@
     <ClCompile Include="clone.cpp" />
     <ClCompile Include="commands.cpp" />
     <ClCompile Include="infrastructure.cpp" />
+    <ClCompile Include="Ref.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="clone.h" />
     <ClInclude Include="commands.h" />
     <ClInclude Include="constants.h" />
     <ClInclude Include="infrastructure.h" />
+    <ClInclude Include="Ref.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

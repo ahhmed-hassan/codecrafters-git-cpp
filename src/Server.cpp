@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
 	std::vector<std::string> args(argv, argv + argc);
 	auto url = "https://github.com/git/git";
 	url = "https://github.com/git/git-reference";
-	auto g = clone::parse_refs_info(clone::get_refs_info());
+	auto g = clone::internal::parse_refs_info(clone::internal::get_refs_info());
 	auto head = clone::get_head(url);
 
 	try {
