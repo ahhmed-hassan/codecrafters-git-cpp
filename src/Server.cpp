@@ -35,12 +35,21 @@ int main(int argc, char* argv[]) {
 	auto g = clone::parse_info_refs(clone::get_info_refs());
 	using namespace std::string_view_literals;
 	auto head = clone::get_head(url);
-	clone::fetch_packfile(url, head);
+	//clone::fetch_packfile(url, head);
 	//std::println(std::cout, "{}"sv, head.ref.object_id); 
-	auto shaHead = clone::get_head_sha(url);
+	//auto shaHead = clone::get_head_sha(url);
+	
 	//std::cout<< "\n\n" <<clone::get_head_sha() << "\n";
 	//std::cout << clone::fetch_packfile(url, head) <<"\n\n";
 	//std::println(std::cout, "{}", clone::extract_packFile(""));
+	try {
+		std::string packfile = clone::fetch_packfile(url, head);
+		std::cout << "Received packfile: " << packfile.size() << " bytes\n";
+		std::cout << "First 20 bytes: " << packfile.substr(0, 20) << "\n";
+	}
+	catch (const std::exception& e) {
+		//std::cerr << "Error: " << e.what() << "\n";
+	}
 	return 0;
 
 #else
