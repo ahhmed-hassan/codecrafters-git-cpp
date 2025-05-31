@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 		std::cout << "First 20 bytes: " << packfile.substr(0, 20) << "\n";
 	}
 	catch (const std::exception& e) {
-		//std::cerr << "Error: " << e.what() << "\n";
+		std::cerr << "Error: " << e.what() << "\n";
 	}
 	return 0;
 
