@@ -1,13 +1,13 @@
 #include <string>
-#include <regex>
 #include <asio.hpp>
 #include <cpr/cpr.h>
 #include <iostream>
+
 #include "clone.h"
 
 namespace clone
 {
-    std::string clone::get_info_refs(const std::string& url)
+    std::string clone::get_refs_info(const std::string& url)
     {
         std::string full_url = std::format("{}/info/refs?service=git-upload-pack", url);
         cpr::Response r = cpr::Get(cpr::Url{ full_url });
@@ -18,7 +18,7 @@ namespace clone
         return r.text;
     }
 
-    std::vector<clone::Ref> clone::parse_info_refs(std::string const& getResponse)
+    std::vector<clone::Ref> clone::parse_refs_info(std::string const& getResponse)
     {
         std::string const header = "0000";
         std::vector<Ref> refs;
@@ -78,29 +78,21 @@ namespace clone
         return refs;
     }
 
-    std::string clone::get_head_sha(std::string const& url)
-    {
-        auto response = get_info_refs(url);
-        auto refs = clone::parse_info_refs(response);
-        auto headRef = std::get<HeadRef>(*refs.begin());
-        return headRef.ref.object_id;
-    }
+ 
 
     HeadRef get_head(std::string const& url)
     {
-        auto response = get_info_refs(url);
-        std::println(std::cout, "GET response\n--------------\n{}", response); 
-        auto refs = clone::parse_info_refs(response);
+        auto response = get_refs_info(url);
+        auto refs = clone::parse_refs_info(response);
         auto headRef = std::get<HeadRef>(*refs.begin());
-        std::println(std::cout, "HEAD SHA\n----------\n{}", headRef.ref.object_id);
         return headRef;
     }
 
     std::string build_negotiation_body(HeadRef head) {
         // Format want/done commands with pkt-line encoding
         auto capsRange = std::ranges::join_with_view(head.capabilities, ' ');
-        auto caps = std::ranges::fold_left(capsRange, std::string{}, std::plus());
-        std::string want = std::format("want {} {}\n", head.ref.object_id, caps);
+        //auto caps = std::ranges::fold_left(capsRange, std::string{}, std::plus());
+        std::string want = std::format("want {} \n", head.ref.object_id);
         std::string done = "done\n";
 
         // Convert to pkt-line (4-byte hex length + data)
@@ -135,7 +127,8 @@ namespace clone
         std::string upload_pack_url = url + "/git-upload-pack";
 
         // 2. Minimal body without capabilities
-        std::string body = std::format("0032want {}\n00000009done\n", head.ref.object_id);
+        std::string body = build_negotiation_body(head);
+        body = std::format("0032want {}\n00000009done\n", head.ref.object_id);
 
         // 3. Simplified headers
         cpr::Response r = cpr::Post(
