@@ -71,7 +71,7 @@ namespace clone
 		if (packData.size() < 12) throw std::runtime_error("Invlid packfile size");
 		PackHeader header{};
 		using namespace commands::constants::clone;
-		std::memcpy(&header, packData.data() + sizeof(startOfHeader), sizeof(PackHeader));
+		std::memcpy(&header, packData.data() + sizeof(startOfHeader.data()), sizeof(PackHeader));
 		header.version = ntohl(header.version); 
 		header.objectCount = ntohl(header.objectCount);
 
