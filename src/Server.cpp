@@ -7,9 +7,11 @@
 #include <algorithm>
 #include <ranges>
 #include <variant>
+#include <iterator>
 #include "gitt/clone.h"
 //#include <view>
 #include "gitt/commands.h"
+#include "zstr.hpp"
 template <class Val, class Err>
 int convert_expected(const std::expected<Val, Err>& e, bool print)
 {
@@ -35,9 +37,17 @@ int main(int argc, char* argv[]) {
 	auto head = clone::get_head(url);
 
 	try {
-		std::string packfile = clone::fetch_packfile(url, head);
-		std::cout << "Received packfile: " << packfile.size() << " bytes\n";
-		std::cout << "First 20 bytes: " << packfile.substr(0, 20) << "\n";
+		clone::packstring packfile = clone::fetch_packfile(url, head);
+		//std::string test = clone::extract_packFile(packfile); 
+		//std::cout << test << "\n\n";
+		//auto firstNull = packfile.substr(packfile.find('\0')+1);
+		//std::stringstream x{ firstNull }; 
+		//zstr::istream y(x);
+		//std::string const blob{ std::istreambuf_iterator<char>(y), std::istreambuf_iterator<char>() };
+		//std::cout << blob << "\n\n";
+		//std::cout << firstNull << "\n\n";
+		clone::extract_packFile(packfile);
+		//std::cout << "First 20 bytes: " << packfile.substr(0, 20) << "\n";
 	}
 	catch (const std::exception& e) {
 		std::cerr << "Error: " << e.what() << "\n";
