@@ -2,7 +2,7 @@
 #include <asio.hpp>
 #include <cpr/cpr.h>
 #include <iostream>
-
+#include "constants.h"
 #include "clone.h"
 
 namespace clone
@@ -70,15 +70,16 @@ namespace clone
 	{
 		if (packData.size() < 12) throw std::runtime_error("Invlid packfile size");
 		PackHeader header{};
-		std::memcpy(&header, packData.data() + sizeof("0008NAK"), sizeof(PackHeader));
+		using namespace commands::constants::clone;
+		std::memcpy(&header, packData.data() + sizeof(startOfHeader), sizeof(PackHeader));
 		header.version = ntohl(header.version); 
 		header.objectCount = ntohl(header.objectCount);
 
 #pragma region verification
-		if(std::memcmp(header.magic, "PACK", sizeof("PACK") != 0))
+		if(std::memcmp(header.magic, magicPack.data(), sizeof(magicPack.data()) != 0))
 			throw std::runtime_error("Invalid packfile singature");
 
-		if (header.version != 2 && header.version != 3)
+		if (std::ranges::find(acceptableVersions, header.version) == std::end(acceptableVersions))
 			throw std::runtime_error("Unsupported packfile version");
 #pragma endregion 
 

@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <string>
 #include <map>
+
 namespace commands
 {
 	namespace constants
@@ -25,6 +26,7 @@ namespace commands
 			size_t const versionSize = 4ul;
 			size_t const objectsBeginPos = magicPack.size() + startOfHeader.size()
 				+ objectCountSize + versionSize;
+			std::vector<uint32_t> const acceptableVersions{ 2,3 };
 
 		}
 		size_t const sha1Size = 20ul;
