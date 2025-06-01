@@ -17,6 +17,16 @@ namespace commands
 			std::string const authorName{ committerName };
 			std::string const authorMail{ committerMail };
 		}
+		namespace clone
+		{
+			std::string const magicPack = "PACK";
+			std::string const startOfHeader = "0008NAK";
+			size_t const objectCountSize = 4ul;
+			size_t const versionSize = 4ul;
+			size_t const objectsBeginPos = magicPack.size() + startOfHeader.size()
+				+ objectCountSize + versionSize;
+
+		}
 		size_t const sha1Size = 20ul;
 		namespace gitTreeConsts
 		{

@@ -1,11 +1,9 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <expected>  
-#include <variant>
 
 #include "infrastructure.h"
-
+#include <cstdint>
 namespace clone
 {
  
@@ -15,7 +13,8 @@ namespace clone
     };*/
    
     HeadRef get_head(std::string const& url); 
-    std::string fetch_packfile(const std::string& url,  HeadRef head); 
-    std::string extract_packFile(std::string const& packData); 
+    using packstring = std::basic_string<unsigned char>; 
+    packstring fetch_packfile(const std::string& url,  HeadRef head);
+    std::string extract_packFile(packstring const& packData);
 
 }
