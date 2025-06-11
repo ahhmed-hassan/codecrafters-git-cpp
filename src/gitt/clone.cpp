@@ -10,7 +10,7 @@ namespace clone
 	HeadRef get_head(std::string const& url)
 	{
 		auto response = internal::get_refs_info(url);
-		auto refs = clone::internal::parse_refs_info(response);
+		auto refs = internal::parse_refs_info(response);
 		auto headRef = std::get<HeadRef>(*refs.begin());
 		return headRef;
 	}
@@ -69,13 +69,17 @@ namespace clone
 	std::string extract_packFile(packstring const& packData)
 	{
 		if (packData.size() < 12) throw std::runtime_error("Invlid packfile size");
+
+#pragma region HeaderInitialization
 		PackHeader header{};
 		using namespace commands::constants::clone;
 		std::memcpy(&header, packData.data() + sizeof(startOfHeader.data()), sizeof(PackHeader));
-		header.version = ntohl(header.version); 
+		header.version = ntohl(header.version);
 		header.objectCount = ntohl(header.objectCount);
+#pragma endregion
 
-#pragma region verification
+
+#pragma region Headerverification
 		if(std::memcmp(header.magic, magicPack.data(), sizeof(magicPack.data()) != 0))
 			throw std::runtime_error("Invalid packfile singature");
 
@@ -85,6 +89,10 @@ namespace clone
 
 
 		return {};
+	}
+
+	void process_packfile(packstring const& packData)
+	{
 	}
 
 }
