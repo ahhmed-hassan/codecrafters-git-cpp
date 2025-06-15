@@ -94,7 +94,7 @@ namespace clone
 			return refs;
 		}
 
-		void process_git_object(ObjectType type, packstring const& data)
+		void process_git_object(bool is_deltified, packstring const& data)
 		{
 		}
 
