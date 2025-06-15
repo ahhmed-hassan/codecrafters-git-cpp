@@ -60,13 +60,8 @@ namespace clone
 		return packstring{ r.text.begin(), r.text.end() };
 	}
 
-	struct PackHeader
-	{
-		char magic[4]{}; 
-		uint32_t version{}; 
-		uint32_t objectCount{}; 
-	};
-	std::string extract_packFile(packstring const& packData)
+	
+	PackHeader extract_packHeader(packstring const& packData)
 	{
 		if (packData.size() < 12) throw std::runtime_error("Invlid packfile size");
 
@@ -88,11 +83,19 @@ namespace clone
 #pragma endregion 
 
 
-		return {};
+		return header;
 	}
 
 	void process_packfile(packstring const& packData)
 	{
+		PackHeader packHeader = extract_packHeader(packData); 
+
+		size_t objectOffset = commands::constants::clone::objectsBeginPos; 
+		for (uint32_t i{}; i < packHeader.objectCount; i++)
+		{
+			internal::ObjectHeader objHeader = internal::parse_object_header_beginning_at(packData, objectOffset); 
+
+		}
 	}
 
 }

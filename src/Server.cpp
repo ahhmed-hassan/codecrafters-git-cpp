@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
 		//std::string const blob{ std::istreambuf_iterator<char>(y), std::istreambuf_iterator<char>() };
 		//std::cout << blob << "\n\n";
 		//std::cout << firstNull << "\n\n";
-		clone::extract_packFile(packfile);
+		clone::extract_packHeader(packfile);
 		//std::cout << "First 20 bytes: " << packfile.substr(0, 20) << "\n";
 	}
 	catch (const std::exception& e) {

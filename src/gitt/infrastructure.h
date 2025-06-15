@@ -6,6 +6,7 @@
 namespace clone
 {
 	using packstring = std::basic_string<unsigned char>;
+	using packstring_view = std::basic_string_view<unsigned char>;
 	namespace internal
 	{
 		std::string build_negotiation_body(HeadRef head);
@@ -20,14 +21,20 @@ namespace clone
 			OFS_DELTA= 6, 
 			REF_DELTA = 7, 
 		};
-
+		struct OffsetDelta { uint64_t offset{}; };
+		struct BaseRefSHA { packstring baseSha{}; };
 		struct ObjectHeader
 		{
+			
 			ObjectType type{}; 
 			uint64_t decompressedSize{}; 
 			size_t headerBytes{}; 
-			std::optional<uint64_t> offsetDelta{};  //OFS_Delta
-			std::optional<packstring> baseRef{}; //RefDelta
+			using maybeOffsetOrBaseSha = std::optional<std::variant<uint64_t, packstring>>; 
+			maybeOffsetOrBaseSha deltaOffsetOrBaseSha{}; 
+			//std::optional<uint64_t> offsetDelta{};  //OFS_Delta
+			//std::optional<packstring> baseRefSHA{}; //RefDelta
+
+			bool is_deltified() const; 
 		};
 
 		void process_git_object(ObjectType type, packstring const&); 
