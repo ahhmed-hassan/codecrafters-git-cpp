@@ -14,6 +14,7 @@
 #include <openssl/sha.h>
 
 #include <format>
+#include "utilities.h"
 
 namespace commands
 {
@@ -23,7 +24,7 @@ namespace commands
 
 	namespace utilities
 	{
-		std::string sha1_hash(const std::string& content) {
+		/*std::string sha1_hash(const std::string& content) {
 			unsigned char hash[SHA_DIGEST_LENGTH];
 			SHA1(reinterpret_cast<const unsigned char*>(content.data()), content.size(), hash);
 
@@ -62,7 +63,7 @@ namespace commands
 			outputHashStream.close();
 			return objectHash;
 
-		}
+		}*/
 		std::vector<Tree> parse_trees(std::string const& treeHash)
 		{
 			auto const treeFilePath = constants::objectsDir / treeHash.substr(0, 2) / treeHash.substr(2);

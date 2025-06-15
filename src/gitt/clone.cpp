@@ -3,6 +3,7 @@
 #include <cpr/cpr.h>
 #include <iostream>
 #include "constants.h"
+#include "utilities.h"
 #include "clone.h"
 
 namespace clone
@@ -95,6 +96,10 @@ namespace clone
 		{
 			internal::ObjectHeader objHeader = internal::parse_object_header_beginning_at(packData, objectOffset); 
 
+			//Move to the actual compressed Data for the header
+			objectOffset += objHeader.headerBytes; 
+
+			//auto compressed = commands::utilities::zlib_compressed_str();
 		}
 	}
 
