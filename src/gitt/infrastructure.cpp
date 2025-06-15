@@ -11,6 +11,12 @@ namespace clone
 {
 	namespace internal
 	{
+		bool ObjectHeader::is_deltified() const
+		{
+			return (this->type == ObjectType::REF_DELTA ||
+				this->type == ObjectType::OFS_DELTA) &&
+				this->deltaOffsetOrBaseSha.has_value() /*Just for cosistency*/;
+		}
 		std::string build_negotiation_body(HeadRef head)
 		{
 
@@ -126,9 +132,34 @@ namespace clone
 			}
 			header.decompressedSize = objSize;
 
-			//TODO: OFS_DELTA and REF_DELTA parsing
+			//If it was not a ref delta or ofs delta then we only needed the size parsed above
+			if (header.type == ObjectType::OFS_DELTA)
+			{
+				int shift{};
+				uint64_t deltaOffset = 0; 
+				do
+				{
+					if (pos >= packData.size()) throw std::runtime_error("UnExpected end of offset data");
 
-			return ObjectHeader();
+					byte = packData[pos++];
+					unsigned char curLast7BitsForDelta = (byte & 0x7F /*All Ones Except the MSB*/);
+					deltaOffset |= static_cast <uint64_t>(curLast7BitsForDelta << shift);
+
+				} while (hasMostSignficantBit(byte)); 
+				//header.offsetDelta = deltaOffset; 
+				header.deltaOffsetOrBaseSha = deltaOffset; 
+
+			}
+			else if (header.type == ObjectType::REF_DELTA)
+			{
+				if (pos + 20 > packData.size()) throw std::runtime_error("Insufficient data for base ref"); 
+				//header.baseRefSHA = packData.substr(pos, 20); 
+				header.deltaOffsetOrBaseSha = packData.substr(pos, 20); 
+				pos += 20; 
+			}
+			
+			header.headerBytes = pos - startOffset;  //So that subsequent parsing calls know where the parsing of this object ended
+			return header; 
 		}
 
 		std::string get_refs_info(const std::string& url)

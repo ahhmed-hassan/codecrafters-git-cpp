@@ -24,7 +24,7 @@ namespace commands
 			std::string const startOfHeader = "0008NAK";
 			size_t const objectCountSize = 4ul;
 			size_t const versionSize = 4ul;
-			size_t const objectsBeginPos = magicPack.size() + startOfHeader.size()
+			size_t const objectsBeginPos = sizeof(magicPack.data()) + sizeof(startOfHeader.data())+
 				+ objectCountSize + versionSize;
 			std::vector<uint32_t> const acceptableVersions{ 2,3 };
 
