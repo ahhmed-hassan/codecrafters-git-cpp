@@ -99,7 +99,19 @@ namespace clone
 			//Move to the actual compressed Data for the header
 			objectOffset += objHeader.headerBytes; 
 
-			//auto compressed = commands::utilities::zlib_compressed_str();
+			auto dataCompressed = packData.substr(
+				objectOffset,
+				packData.size() - objectOffset - 20
+			);
+
+			//HACK : make the utilities return the packString directly
+			auto decompressedStr = commands::utilities::zlib_compressed_str(dataCompressed);
+			auto decompressedPackString = packstring(decompressedStr.begin(), decompressedStr.end());
+
+			internal::process_git_object(objHeader.is_deltified(), decompressedPackString);
+
+			//Move To Next Object
+			objectOffset += dataCompressed.size(); 
 		}
 	}
 
