@@ -10,6 +10,7 @@ namespace commands
 		
 
 	std::string zlib_compressed_str(std::string const& input);
+	std::string zlib_compressed_str(std::basic_string<unsigned char> const& input);
 
 	std::expected<std::string, std::string> hash_and_save(std::string const& toHash, bool save);
 	}

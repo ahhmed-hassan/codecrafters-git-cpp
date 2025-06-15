@@ -39,7 +39,7 @@ namespace clone
 			bool is_deltified() const; 
 		};
 
-		void process_git_object(ObjectType type, packstring const&); 
+		void process_git_object(bool is_deltified, packstring const&); 
 		ObjectHeader parse_object_header_beginning_at(packstring const& packData, size_t startOffset = 0); 
 
 		
