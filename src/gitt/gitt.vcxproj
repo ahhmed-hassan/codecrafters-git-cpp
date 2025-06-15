@@ -24,6 +24,7 @@
     <ClCompile Include="commands.cpp" />
     <ClCompile Include="infrastructure.cpp" />
     <ClCompile Include="Ref.cpp" />
+    <ClCompile Include="utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="clone.h" />
@@ -31,6 +32,7 @@
     <ClInclude Include="constants.h" />
     <ClInclude Include="infrastructure.h" />
     <ClInclude Include="Ref.h" />
+    <ClInclude Include="utilities.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
