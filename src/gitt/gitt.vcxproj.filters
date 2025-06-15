@@ -36,6 +36,9 @@
     <ClCompile Include="Ref.cpp">
       <Filter>Source Files\Clone</Filter>
     </ClCompile>
+    <ClCompile Include="utilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="commands.h">
@@ -52,6 +55,9 @@
     </ClInclude>
     <ClInclude Include="Ref.h">
       <Filter>Header Files\Clone</Filter>
+    </ClInclude>
+    <ClInclude Include="utilities.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

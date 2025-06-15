@@ -3,6 +3,8 @@
 #include <string>
 #include <cstdint>
 #include <optional>
+#include <expected>
+
 namespace clone
 {
 	using packstring = std::basic_string<unsigned char>;
@@ -39,5 +41,10 @@ namespace clone
 
 		void process_git_object(ObjectType type, packstring const&); 
 		ObjectHeader parse_object_header_beginning_at(packstring const& packData, size_t startOffset = 0); 
+
+		
+
+
+	
 	}
 }
