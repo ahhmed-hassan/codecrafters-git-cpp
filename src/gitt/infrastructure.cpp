@@ -13,9 +13,17 @@ namespace clone
 	{
 		bool ObjectHeader::is_deltified() const
 		{
-			return (this->type == ObjectType::REF_DELTA ||
-				this->type == ObjectType::OFS_DELTA) &&
-				this->deltaOffsetOrBaseSha.has_value() /*Just for cosistency*/;
+			return is_ref_delta() || is_offset_delta(); 
+		}
+		bool ObjectHeader::is_ref_delta() const
+		{
+			return deltaOffsetOrBaseSha.has_value() &&
+				 std::holds_alternative<packstring>(deltaOffsetOrBaseSha.value()); 
+		}
+		bool ObjectHeader::is_offset_delta() const
+		{
+			return deltaOffsetOrBaseSha.has_value() &&
+				std::holds_alternative<uint64_t>(deltaOffsetOrBaseSha.value());
 		}
 		std::string build_negotiation_body(HeadRef head)
 		{

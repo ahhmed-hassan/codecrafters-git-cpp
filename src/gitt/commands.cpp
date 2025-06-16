@@ -24,46 +24,7 @@ namespace commands
 
 	namespace utilities
 	{
-		/*std::string sha1_hash(const std::string& content) {
-			unsigned char hash[SHA_DIGEST_LENGTH];
-			SHA1(reinterpret_cast<const unsigned char*>(content.data()), content.size(), hash);
-
-			std::stringstream ss;
-			for (int i = 0; i < SHA_DIGEST_LENGTH; ++i) {
-				ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hash[i]);
-			}
-			return ss.str();
-
-		}
-
-		std::string zlib_compressed_str(std::string const& input)
-		{
-			auto compressedSize = compressBound(static_cast<uLong>(input.size()));
-			std::string compressed{}; compressed.resize(compressedSize);
-			compress(reinterpret_cast<Bytef*>(&compressed[0]), &compressedSize, reinterpret_cast<Bytef const*>(input.data()), static_cast<uLong>(input.size()));
-			compressed.resize(compressedSize);
-			return compressed;
-		}
-
-		std::expected<std::string, std::string> hash_and_save(std::string const& toHash, bool save)
-		{
-			auto objectHash = utilities::sha1_hash(toHash);
-			auto objectDirPath = constants::objectsDir / objectHash.substr(0, 2);
-			fs::create_directories(objectDirPath);
-			const auto filePath = objectDirPath / objectHash.substr(2);
-			auto compressed = utilities::zlib_compressed_str(toHash);
-
-			if (!save)
-				return objectHash;
-
-			std::ofstream outputHashStream(filePath);
-			if (!outputHashStream)
-				return std::unexpected(std::format("Cannot open the file: \t {}", filePath.string()));
-			outputHashStream << compressed;
-			outputHashStream.close();
-			return objectHash;
-
-		}*/
+		
 		std::vector<Tree> parse_trees(std::string const& treeHash)
 		{
 			auto const treeFilePath = constants::objectsDir / treeHash.substr(0, 2) / treeHash.substr(2);
@@ -238,18 +199,6 @@ namespace commands
 				file.close();
 				std::string const header = "blob " + std::to_string(content.size());
 				std::string const finaHashInput = header + '\0' + content;
-
-				/*if (auto blobHash = utilities::hash_and_save(finaHashInput, wrtiteThebject); blobHash)
-				{
-					if (print) 
-						std::println(std::cout, "{}", blobHash.value());
-					return EXIT_SUCCESS;
-				}
-				else
-				{
-					std::println(std::cerr, "{}", blobHash.error());
-					return EXIT_FAILURE;
-				}*/
 				return utilities::hash_and_save(finaHashInput, wrtiteThebject);
 			}
 			catch (const std::bad_alloc& e)

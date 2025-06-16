@@ -16,7 +16,7 @@
 #include <format>
 namespace commands
 {
-	namespace fs = std::filesystem; 
+	namespace fs = std::filesystem;
 	namespace utilities
 	{
 		std::string sha1_hash(const std::string& content) {
@@ -49,6 +49,14 @@ namespace commands
 			return compressed;
 		}
 
+		std::filesystem::path create_directories_and_get_path_from_hash(std::string const& objectHash)
+		{
+			auto objectDirPath = constants::objectsDir / objectHash.substr(0, 2);
+			fs::create_directories(objectDirPath);
+			const auto filePath = objectDirPath / objectHash.substr(2);
+			return filePath;
+		}
+
 		std::expected<std::string, std::string> hash_and_save(std::string const& toHash, bool save)
 		{
 			auto objectHash = utilities::sha1_hash(toHash);
@@ -66,6 +74,16 @@ namespace commands
 			outputHashStream << compressed;
 			outputHashStream.close();
 			return objectHash;
+
+		}
+		auto to_hex(std::string_view sha) -> std::string
+		{
+
+			std::ostringstream hexout{};
+			hexout << std::hex << std::setfill('0');
+			for (auto b : sha)
+				hexout << std::setw(2) << (int)static_cast<uint8_t>(b);
+			return hexout.str();
 
 		}
 	}
