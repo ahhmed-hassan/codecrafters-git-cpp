@@ -240,19 +240,23 @@ namespace commands
 			if (!fs::is_directory(de) || (!fs::is_empty(de) && fs::is_directory(de) && de.path().filename() != ".git"))
 				vec.push_back(de);
 		std::ranges::sort(vec, {}, [](const fs::directory_entry& de) {return de.path().filename(); });
+
 		struct HashAndEntry { std::string hash{}; fs::directory_entry e{}; };
+
 		auto entriesHashe = std::ranges::transform_view(vec, [](fs::directory_entry const& e)-> HashAndEntry {
 			if (fs::is_directory(e)) {
 				if (auto hash = write_tree_and_get_hash(e.path()); hash.has_value())
 				{
-					return HashAndEntry{utilities::hexToByteString(hash.value()), e};
+					return HashAndEntry{ utilities::hexToByteString(hash.value()), e };
 				}
 			}
 			else if (auto shaHash = hash(e.path(), true, false); shaHash.has_value())
 			{
-				return HashAndEntry{ utilities::hexToByteString(shaHash.value()),e};
+				return HashAndEntry{ utilities::hexToByteString(shaHash.value()),e };
 			}
-			
+			else
+				// HACK : replace with optioonal return type and make and_then at the caller.
+				throw std::runtime_error("");
 			});
 
 		auto trees = entriesHashe
@@ -271,9 +275,9 @@ namespace commands
 	
 	}
 	
-	int write_tree()
+	int write_tree(std::filesystem::path path)
 	{
-		if (auto res = write_tree_and_get_hash(fs::path(".")); res.has_value())
+		if (auto res = write_tree_and_get_hash(path); res.has_value())
 		{
 			std::cout << res.value(); return EXIT_SUCCESS;
 		}
