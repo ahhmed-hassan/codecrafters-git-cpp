@@ -37,6 +37,8 @@ namespace clone
 			//std::optional<packstring> baseRefSHA{}; //RefDelta
 
 			bool is_deltified() const; 
+			bool is_ref_delta() const; 
+			bool is_offset_delta() const; 
 		};
 
 		void process_git_object(bool is_deltified, packstring const&); 

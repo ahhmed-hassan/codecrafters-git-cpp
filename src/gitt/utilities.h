@@ -6,12 +6,15 @@ namespace commands
 {
 	namespace utilities
 	{
-	std::string sha1_hash(const std::string& content);
-		
+		std::string sha1_hash(const std::string& content);
 
-	std::string zlib_compressed_str(std::string const& input);
-	std::string zlib_compressed_str(std::basic_string<unsigned char> const& input);
 
-	std::expected<std::string, std::string> hash_and_save(std::string const& toHash, bool save);
+		std::string zlib_compressed_str(std::string const& input);
+		std::string zlib_compressed_str(std::basic_string<unsigned char> const& input);
+
+		std::filesystem::path create_directories_and_get_path_from_hash(std::string const& sha);
+		std::expected<std::string, std::string> hash_and_save(std::string const& toHash, bool save);
+		auto to_hex(std::string_view sha) -> std::string;
 	}
+		
 }
