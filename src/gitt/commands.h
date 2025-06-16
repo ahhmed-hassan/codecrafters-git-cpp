@@ -25,10 +25,16 @@ namespace commands
 	
 	
 	int ls_tree(std::string args, bool namesOnly); 
-	int write_tree();
+	int write_tree(std::filesystem::path path = "." );
 	int commmit(std::string const treeHash, std::optional<std::string> parentTreeHash, std::optional<std::string> message = std::nullopt);
 	namespace utilities
 	{
+		/*
+		*Hashes the given content
+		* @parameter toHash: The uncompressed string to hash 
+		* @paramater save: If true: The compressed content would be stored in the objects database. 
+		* @return the sha hash of the content 
+		*/
 		std::expected<std::string, std::string> hash_and_save(std::string const& toHash, bool save=true);
 		[[nodiscard]] std::vector<Tree> parse_trees(std::string const& treeHash);
 	}

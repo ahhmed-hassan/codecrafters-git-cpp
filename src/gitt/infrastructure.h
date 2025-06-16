@@ -23,6 +23,7 @@ namespace clone
 			OFS_DELTA= 6, 
 			REF_DELTA = 7, 
 		};
+		std::string objecttype_to_str(ObjectType objType); 
 		struct OffsetDelta { uint64_t offset{}; };
 		struct BaseRefSHA { packstring baseSha{}; };
 		struct ObjectHeader
@@ -33,16 +34,22 @@ namespace clone
 			size_t headerBytes{}; 
 			using maybeOffsetOrBaseSha = std::optional<std::variant<uint64_t, packstring>>; 
 			maybeOffsetOrBaseSha deltaOffsetOrBaseSha{}; 
-			//std::optional<uint64_t> offsetDelta{};  //OFS_Delta
-			//std::optional<packstring> baseRefSHA{}; //RefDelta
-
 			bool is_deltified() const; 
 			bool is_ref_delta() const; 
 			bool is_offset_delta() const; 
+			packstring ref() const; 
+			uint64_t offset() const; 
 		};
 
 		void process_git_object(bool is_deltified, packstring const&); 
 		ObjectHeader parse_object_header_beginning_at(packstring const& packData, size_t startOffset = 0); 
+
+		void process_deltified(ObjectHeader const& header, packstring const& data); 
+		/*
+		* Probably just for writing to the database first then the tree should be constructed later from those new written objects 
+		* using the already existing utilities for reading blobs and trees 
+		*/
+		void process_non_deltified(ObjectHeader const& header, packstring const& data); 
 
 		
 
