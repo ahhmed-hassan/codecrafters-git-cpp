@@ -1,6 +1,4 @@
 #include "infrastructure.h"
-#include "utilities.h"
-#include "commands.h"
 #include <format>
 #include <ranges>
 #include <iostream>
@@ -15,27 +13,17 @@ namespace clone
 	{
 		bool ObjectHeader::is_deltified() const
 		{
-			return is_ref_delta() || is_offset_delta();
+			return is_ref_delta() || is_offset_delta(); 
 		}
 		bool ObjectHeader::is_ref_delta() const
 		{
 			return deltaOffsetOrBaseSha.has_value() &&
-				std::holds_alternative<packstring>(deltaOffsetOrBaseSha.value());
+				 std::holds_alternative<packstring>(deltaOffsetOrBaseSha.value()); 
 		}
 		bool ObjectHeader::is_offset_delta() const
 		{
 			return deltaOffsetOrBaseSha.has_value() &&
 				std::holds_alternative<uint64_t>(deltaOffsetOrBaseSha.value());
-		}
-		packstring ObjectHeader::ref() const
-		{
-			assert(is_ref_delta());
-			return std::get<packstring>(deltaOffsetOrBaseSha.value());
-		}
-		uint64_t ObjectHeader::offset() const
-		{
-			assert(is_offset_delta());
-			return std::get<uint64_t>(deltaOffsetOrBaseSha.value());
 		}
 		std::string build_negotiation_body(HeadRef head)
 		{
@@ -114,27 +102,6 @@ namespace clone
 			return refs;
 		}
 
-		std::string objecttype_to_str(ObjectType objType)
-		{
-			switch (objType)
-			{
-			case ObjectType::COMMIT:
-				return "commmit";
-			case ObjectType::BLOB:
-				return "blob";
-			case ObjectType::TREE:
-				return "tree";
-			case ObjectType::REF_DELTA:
-				return "ref_delta";
-			case ObjectType::TAG:
-				return "tag";
-			case ObjectType::OFS_DELTA:
-				return "ofs_delta";
-			default: throw std::runtime_error("Not a known object Type");
-
-			}
-		}
-
 		void process_git_object(bool is_deltified, packstring const& data)
 		{
 		}
@@ -162,7 +129,7 @@ namespace clone
 			//Variable length size
 			int currentShiftSize = nextShifSize;
 			auto hasMostSignficantBit = [](unsigned char byte) {return byte & 0x80;  };
-
+			
 			while (hasMostSignficantBit(byte))
 			{
 				if (pos >= packData.size()) throw std::runtime_error("Unexpected end of data");
@@ -177,7 +144,7 @@ namespace clone
 			if (header.type == ObjectType::OFS_DELTA)
 			{
 				int shift{};
-				uint64_t deltaOffset = 0;
+				uint64_t deltaOffset = 0; 
 				do
 				{
 					if (pos >= packData.size()) throw std::runtime_error("UnExpected end of offset data");
@@ -186,29 +153,21 @@ namespace clone
 					unsigned char curLast7BitsForDelta = (byte & 0x7F /*All Ones Except the MSB*/);
 					deltaOffset |= static_cast <uint64_t>(curLast7BitsForDelta << shift);
 
-				} while (hasMostSignficantBit(byte));
+				} while (hasMostSignficantBit(byte)); 
 				//header.offsetDelta = deltaOffset; 
-				header.deltaOffsetOrBaseSha = deltaOffset;
+				header.deltaOffsetOrBaseSha = deltaOffset; 
 
 			}
 			else if (header.type == ObjectType::REF_DELTA)
 			{
-				if (pos + 20 > packData.size()) throw std::runtime_error("Insufficient data for base ref");
+				if (pos + 20 > packData.size()) throw std::runtime_error("Insufficient data for base ref"); 
 				//header.baseRefSHA = packData.substr(pos, 20); 
-				header.deltaOffsetOrBaseSha = packData.substr(pos, 20);
-				pos += 20;
+				header.deltaOffsetOrBaseSha = packData.substr(pos, 20); 
+				pos += 20; 
 			}
-
+			
 			header.headerBytes = pos - startOffset;  //So that subsequent parsing calls know where the parsing of this object ended
-			return header;
-		}
-		
-		void process_non_deltified(ObjectHeader const& header, packstring const& data)
-		{
-			std::string dataStr(data.begin(), data.end());
-			std::string meta_data = internal::objecttype_to_str(header.type) + " " + std::to_string(data.size()) + '\0';
-			commands::utilities::hash_and_save(meta_data + dataStr, true);
-
+			return header; 
 		}
 
 		std::string get_refs_info(const std::string& url)
