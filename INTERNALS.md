@@ -1,4 +1,4 @@
-This is an big-picture explaination of how (the implemented parts of) git works. 
+This is a big-picture explaination of how (the implemented parts of) git works. 
 The explaination here would be top-bottom approach not bottom-up for people, like me, who likes the declarative code more
 
 # The data model for working locally
