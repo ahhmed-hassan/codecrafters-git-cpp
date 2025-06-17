@@ -7,7 +7,7 @@
 #include <string>
 #include <sstream>
 #include <climits>
-
+#include "zstr.hpp"
 #include <cpr/cpr.h>
 namespace clone
 {
@@ -210,8 +210,16 @@ namespace clone
 
 			std::string dataStr(data.begin(), data.end());
 			
-			std::string meta_data = internal::objecttype_to_str(header.type) + " " + std::to_string(data.size()) + '\0';
-			commands::utilities::hash_and_save(meta_data + dataStr, true);
+			auto dataStream = std::istringstream(dataStr);
+			zstr::istream fileStream(dataStream);
+			
+			//To Be compatible with hash_and_save funciton we should for ease of use decompress the content in the pack string, then computes the header + the content
+			//and give it to the function to compute it as any content to hash. (Please note we are not computing anything here. The data is alreday ready. We are just populating to the database)
+			std::string const uncompressedData{ std::istream_iterator<char>(fileStream), std::istream_iterator<char>() };
+
+			std::string meta_data = internal::objecttype_to_str(header.type) + " " + std::to_string(uncompressedData.size()) + '\0';
+
+			commands::utilities::hash_and_save(meta_data + uncompressedData, true);
 
 		}
 

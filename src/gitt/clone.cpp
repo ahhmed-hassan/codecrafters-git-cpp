@@ -103,12 +103,8 @@ namespace clone
 				objectOffset,
 				packData.size() - objectOffset - 20
 			);
-
-			//HACK : make the utilities return the packString directly
-			auto decompressedStr = commands::utilities::zlib_compressed_str(dataCompressed);
-			auto decompressedPackString = packstring(decompressedStr.begin(), decompressedStr.end());
-
-			internal::process_git_object(objHeader.is_deltified(), decompressedPackString);
+			
+			internal::process_git_object(objHeader.is_deltified(), dataCompressed);
 
 			//Move To Next Object
 			objectOffset += dataCompressed.size(); 
