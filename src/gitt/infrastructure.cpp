@@ -139,7 +139,7 @@ namespace clone
 		{
 		}
 
-		ObjectHeader parse_object_header_beginning_at(packstring const& packData, size_t startOffset)
+		ObjectHeader get_object_header_beginning_at(packstring const& packData, size_t startOffset)
 		{
 			if (startOffset >= packData.size()) throw std::runtime_error("Start offset beyon data size");
 #pragma region Constants
@@ -155,6 +155,7 @@ namespace clone
 			unsigned char byte = packData[pos++];
 
 
+#pragma region Type and Variable Length size parsing
 			//Extract Type and initial size
 			header.type = static_cast<ObjectType>((byte >> 4) & rightMostThreeBits);
 			uint64_t objSize = byte & 0x0F;
@@ -173,6 +174,8 @@ namespace clone
 			}
 			header.decompressedSize = objSize;
 
+#pragma endregion
+
 			//If it was not a ref delta or ofs delta then we only needed the size parsed above
 			if (header.type == ObjectType::OFS_DELTA)
 			{
@@ -187,14 +190,12 @@ namespace clone
 					deltaOffset |= static_cast <uint64_t>(curLast7BitsForDelta << shift);
 
 				} while (hasMostSignficantBit(byte));
-				//header.offsetDelta = deltaOffset; 
 				header.deltaOffsetOrBaseSha = deltaOffset;
 
 			}
 			else if (header.type == ObjectType::REF_DELTA)
 			{
 				if (pos + 20 > packData.size()) throw std::runtime_error("Insufficient data for base ref");
-				//header.baseRefSHA = packData.substr(pos, 20); 
 				header.deltaOffsetOrBaseSha = packData.substr(pos, 20);
 				pos += 20;
 			}
@@ -205,7 +206,10 @@ namespace clone
 		
 		void process_non_deltified(ObjectHeader const& header, packstring const& data)
 		{
+			if (header.is_deltified()) throw std::runtime_error("This function shall be only called or non deltified objects");
+
 			std::string dataStr(data.begin(), data.end());
+			
 			std::string meta_data = internal::objecttype_to_str(header.type) + " " + std::to_string(data.size()) + '\0';
 			commands::utilities::hash_and_save(meta_data + dataStr, true);
 
