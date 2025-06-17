@@ -21,6 +21,9 @@ namespace commands
 	};
 	int init();
 	int cat(std::string option, std::string args);
+	/*
+	* Realizing of git hash-object -w for some given path. 
+	*/
 	std::expected<std::string, std::string> hash(std::filesystem::path const& path, bool wrtiteThebject, bool print);
 	
 	

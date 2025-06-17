@@ -94,7 +94,7 @@ namespace clone
 		size_t objectOffset = commands::constants::clone::objectsBeginPos; 
 		for (uint32_t i{}; i < packHeader.objectCount; i++)
 		{
-			internal::ObjectHeader objHeader = internal::parse_object_header_beginning_at(packData, objectOffset); 
+			internal::ObjectHeader objHeader = internal::get_object_header_beginning_at(packData, objectOffset); 
 
 			//Move to the actual compressed Data for the header
 			objectOffset += objHeader.headerBytes; 

@@ -42,11 +42,11 @@ namespace clone
 		};
 
 		void process_git_object(bool is_deltified, packstring const&); 
-		ObjectHeader parse_object_header_beginning_at(packstring const& packData, size_t startOffset = 0); 
+		ObjectHeader get_object_header_beginning_at(packstring const& packData, size_t startOffset = 0); 
 
 		void process_deltified(ObjectHeader const& header, packstring const& data); 
 		/*
-		* Probably just for writing to the database first then the tree should be constructed later from those new written objects 
+		* Populates the non deltified object to the database first then the tree should be constructed later from those new written objects
 		* using the already existing utilities for reading blobs and trees 
 		*/
 		void process_non_deltified(ObjectHeader const& header, packstring const& data); 
