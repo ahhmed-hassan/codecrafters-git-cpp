@@ -203,6 +203,86 @@ namespace clone
 			header.headerBytes = pos - startOffset;  //So that subsequent parsing calls know where the parsing of this object ended
 			return header;
 		}
+
+		std::string apply_ref_delta(const packstring& baseRef, const packstring& delta_data)
+		{
+			
+				// 1. Convert binary SHA to hex
+				auto bin_sha_to_hex = [](const packstring& bin_sha) -> std::string {
+					std::ostringstream oss;
+					for (unsigned char c : bin_sha) {
+						oss << std::hex << std::setw(2) << std::setfill('0')
+							<< static_cast<int>(c);
+					}
+					return oss.str();
+					};
+
+				std::string base_sha = bin_sha_to_hex(baseRef);
+
+				// 2. Get base object content using your existing utilities
+				//BUG: Not working now return the object here
+				std::string base_obj = commands::cat( "-p", base_sha);
+
+				// 3. Apply delta instructions
+				size_t delta_pos = 0;
+
+				// Read base and result sizes (variable-length integers)
+				auto read_varint = [&]() -> uint64_t {
+					uint64_t value = 0;
+					int shift = 0;
+					unsigned char byte;
+					do {
+						if (delta_pos >= delta_data.size()) {
+							throw std::runtime_error("Unexpected end of delta data");
+						}
+						byte = delta_data[delta_pos++];
+						value |= static_cast<uint64_t>(byte & 0x7F) << shift;
+						shift += 7;
+					} while (byte & 0x80);
+					return value;
+					};
+
+				uint64_t base_size = read_varint();
+				uint64_t result_size = read_varint();
+
+				if (base_size != base_obj.size()) {
+					throw std::runtime_error("Base size mismatch");
+				}
+
+				std::string result;
+				result.reserve(result_size);
+
+				// Process delta instructions
+				while (delta_pos < delta_data.size()) {
+					unsigned char inst = delta_data[delta_pos++];
+
+					// Add instruction
+					if ((inst & 0x80) == 0) {
+						uint64_t length = inst;
+						if (length > 0) {
+							if (delta_pos + length > delta_data.size()) {
+								throw std::runtime_error("Invalid add instruction");
+							}
+							result.append(reinterpret_cast<const char*>(
+								&delta_data[delta_pos]), length);
+							delta_pos += length;
+						}
+					}
+					// Copy instruction (simplified for initial implementation)
+					else {
+						// For now, just copy the entire base object
+						// (We'll implement proper copy later)
+						result.append(base_obj);
+					}
+				}
+
+				if (result.size() != result_size) {
+					throw std::runtime_error("Result size mismatch");
+				}
+
+				return result;
+			};
+		
 		
 		void process_non_deltified(ObjectHeader const& header, packstring const& data)
 		{
