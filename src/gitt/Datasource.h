@@ -10,7 +10,7 @@ namespace clone
         public:
             using stringType = std::basic_string<CharT>; 
             virtual CharT advance() = 0;
-            virtual CharT peek() = 0;
+            virtual CharT peek()  = 0;
             CharT previous();
             virtual bool isAtEnd() = 0;
             // Output size is always n. Will return EOF
@@ -28,22 +28,23 @@ namespace clone
         public:
             StringDataSource(const std::basic_string<CharT>& input);
             CharT advance() override;
-            CharT peek() override;
+            CharT peek()  override;
             bool isAtEnd() override;
         private:
             std::basic_string<CharT> _input;
             size_t _index = 0;
         };
         
-        class FileDataSource : public DataSource<> {
+        template <typename CharT = char>
+        class FileDataSource : public DataSource<CharT> {
         public:
-            FileDataSource(const std::string& filename);
+            FileDataSource(const std::basic_string<CharT> & filename);
             ~FileDataSource();
-            char advance() override;
-            char peek() override;
+            CharT advance() override;
+            CharT peek()  override;
             bool isAtEnd() override;
         private:
-            std::ifstream _ifstream{};
+            std::basic_ifstream<CharT> _ifstream{};
             bool _isAtEnd = false;
         };
     }
