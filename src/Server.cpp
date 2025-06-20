@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
 	auto head = clone::get_head(url);
 
 	try {
-		clone::packstring packfile = clone::fetch_packfile(url, head);
+		//clone::packstring packfile = clone::fetch_packfile(url, head);
 		//std::string test = clone::extract_packFile(packfile); 
 		//std::cout << test << "\n\n";
 		//auto firstNull = packfile.substr(packfile.find('\0')+1);
@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
 		//std::string const blob{ std::istreambuf_iterator<char>(y), std::istreambuf_iterator<char>() };
 		//std::cout << blob << "\n\n";
 		//std::cout << firstNull << "\n\n";
-		clone::extract_packHeader(packfile);
+		//clone::extract_packHeader(packfile);
 		//std::cout << "First 20 bytes: " << packfile.substr(0, 20) << "\n";
 	}
 	catch (const std::exception& e) {
