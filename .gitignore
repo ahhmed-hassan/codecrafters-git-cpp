@@ -53,6 +53,7 @@ vcpkg_installed
 src/gitt/x64/
 src/gitt/gitt/
 src/gitt/.vs/
+src/gitt/gitparsing
 #src/gitt/gitt.sln
 #src/gitt/gitt.vcxproj
 #src/gitt/gitt.vcxproj.filters
