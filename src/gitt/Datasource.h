@@ -5,6 +5,7 @@ namespace clone
 {
     namespace internal
     {
+        
         class DataSource {
         public:
             virtual char advance() = 0;
@@ -19,6 +20,7 @@ namespace clone
         protected:
             char _previous = '\0';
         };
+        
         class StringDataSource : public DataSource {
         public:
             StringDataSource(const std::string& input);
@@ -29,6 +31,7 @@ namespace clone
             std::string _input;
             size_t _index = 0;
         };
+        
         class FileDataSource : public DataSource {
         public:
             FileDataSource(const std::string& filename);

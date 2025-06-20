@@ -56,13 +56,13 @@
     <ClInclude Include="infrastructure.h">
       <Filter>Header Files\Clone</Filter>
     </ClInclude>
-    <ClInclude Include="Ref.h">
-      <Filter>Header Files\Clone</Filter>
-    </ClInclude>
     <ClInclude Include="utilities.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Datasource.h">
+      <Filter>Header Files\Clone</Filter>
+    </ClInclude>
+    <ClInclude Include="CloneTypes.h">
       <Filter>Header Files\Clone</Filter>
     </ClInclude>
   </ItemGroup>

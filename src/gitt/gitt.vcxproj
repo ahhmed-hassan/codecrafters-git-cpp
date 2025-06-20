@@ -29,11 +29,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="clone.h" />
+    <ClInclude Include="CloneTypes.h" />
     <ClInclude Include="commands.h" />
     <ClInclude Include="constants.h" />
     <ClInclude Include="Datasource.h" />
     <ClInclude Include="infrastructure.h" />
-    <ClInclude Include="Ref.h" />
     <ClInclude Include="utilities.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
