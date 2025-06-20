@@ -5,23 +5,26 @@ namespace clone
 {
     namespace internal
     {
-        
+        template <typename CharT= char>
         class DataSource {
         public:
-            virtual char advance() = 0;
-            virtual char peek() = 0;
-            char previous();
+            using stringType = std::basic_string<CharT>; 
+            virtual CharT advance() = 0;
+            virtual CharT peek() = 0;
+            CharT previous();
             virtual bool isAtEnd() = 0;
             // Output size is always n. Will return EOF
             // characters if advancing past the end.
             // Does not do any checking for isAtEnd().
             // User is responsible for knowing if this is reasonable.
-            std::string advanceN(size_t n);
+            stringType advanceN(size_t n);
         protected:
-            char _previous = '\0';
+            CharT _previous = '\0';
         };
         
-        class StringDataSource : public DataSource {
+       
+        //template <typename CharT>
+        class StringDataSource : public DataSource<> {
         public:
             StringDataSource(const std::string& input);
             char advance() override;
@@ -32,7 +35,7 @@ namespace clone
             size_t _index = 0;
         };
         
-        class FileDataSource : public DataSource {
+        class FileDataSource : public DataSource<> {
         public:
             FileDataSource(const std::string& filename);
             ~FileDataSource();

@@ -3,16 +3,20 @@ namespace clone
 {
 	namespace internal
 	{
-		char DataSource::previous() {
+		template <typename CharT>
+		CharT DataSource<CharT>::previous() {
 			return _previous;
 		}
-		std::string DataSource::advanceN(size_t n) {
-			std::string result;
+		template char DataSource<char>::previous();
+		template <typename CharT>
+		DataSource<CharT>::stringType DataSource<CharT>::advanceN(size_t n) {
+			stringType result{};
 			for (size_t i = 0; i < n; ++i) {
 				result += advance();
 			}
 			return result;
 		}
+		template std::basic_string<char> DataSource<char>::advanceN(size_t n); 
 		StringDataSource::StringDataSource(const std::string& input) : _input(input) {}
 		char StringDataSource::advance() {
 			if (_index >= _input.size()) {
