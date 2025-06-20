@@ -41,6 +41,7 @@ namespace clone
 			uint64_t offset() const; 
 		};
 
+		
 		void process_git_object(bool is_deltified, packstring const&); 
 		ObjectHeader get_object_header_beginning_at(packstring const& packData, size_t startOffset = 0); 
 

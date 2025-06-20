@@ -39,6 +39,9 @@
     <ClCompile Include="utilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DataSource.cpp">
+      <Filter>Source Files\Clone</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="commands.h">
@@ -58,6 +61,9 @@
     </ClInclude>
     <ClInclude Include="utilities.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Datasource.h">
+      <Filter>Header Files\Clone</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
