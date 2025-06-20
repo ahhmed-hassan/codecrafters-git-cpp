@@ -20,7 +20,7 @@ namespace commands
 		Tree(std::filesystem::directory_entry const& de, std::string const& hash); 
 	};
 	int init();
-	int cat(std::string option, std::string args);
+	std::expected<std::string, std::string> cat(std::string option, std::string args);
 	/*
 	* Realizing of git hash-object -w for some given path. 
 	*/
