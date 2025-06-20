@@ -9,6 +9,7 @@
 #include <climits>
 #include "zstr.hpp"
 #include <cpr/cpr.h>
+#include "Datasource.h"
 namespace clone
 {
 	namespace internal

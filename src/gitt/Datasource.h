@@ -23,15 +23,15 @@ namespace clone
         };
         
        
-        //template <typename CharT>
-        class StringDataSource : public DataSource<> {
+        template <typename CharT= char>
+        class StringDataSource : public DataSource<CharT> {
         public:
-            StringDataSource(const std::string& input);
-            char advance() override;
-            char peek() override;
+            StringDataSource(const std::basic_string<CharT>& input);
+            CharT advance() override;
+            CharT peek() override;
             bool isAtEnd() override;
         private:
-            std::string _input;
+            std::basic_string<CharT> _input;
             size_t _index = 0;
         };
         
