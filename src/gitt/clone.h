@@ -28,7 +28,7 @@ namespace clone
         auto parseBinPack() ->
             std::expected<std::unordered_map<std::string, GitObject>, std::string>;
     private:
-        std::shared_ptr<internal::DataSource> _dataSource;
+        std::shared_ptr<internal::DataSource<>> _dataSource;
         std::string _input;
         size_t parseHeader();
         std::string parseHash20();
