@@ -30,6 +30,7 @@ namespace clone
             CharT advance() override;
             CharT peek()  override;
             bool isAtEnd() override;
+            CharT const* data() const;
         private:
             std::basic_string<CharT> _input;
             size_t _index = 0;

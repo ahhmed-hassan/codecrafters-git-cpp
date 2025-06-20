@@ -56,6 +56,15 @@ namespace clone
 
 		
 		template <typename CharT>
+		CharT const* StringDataSource<CharT>::data() const
+		{
+			return this->_input.data();
+		}
+
+		template char const* StringDataSource<char>::data() const; 
+		template unsigned char const* StringDataSource<unsigned char>::data() const; 
+
+		template <typename CharT>
 		//HACK:Does the conversion make sense? 
 		FileDataSource<CharT>::FileDataSource(const std::basic_string<CharT>& filename) : _ifstream(std::string{ filename.begin(), filename.end() }) {
 			if (!_ifstream.is_open()) {
