@@ -8,6 +8,8 @@ namespace clone
 			return _previous;
 		}
 		template char DataSource<char>::previous();
+		template unsigned char DataSource<unsigned char>::previous();
+
 		template <typename CharT>
 		DataSource<CharT>::stringType DataSource<CharT>::advanceN(size_t n) {
 			stringType result{};
@@ -17,23 +19,41 @@ namespace clone
 			return result;
 		}
 		template std::basic_string<char> DataSource<char>::advanceN(size_t n); 
-		StringDataSource::StringDataSource(const std::string& input) : _input(input) {}
-		char StringDataSource::advance() {
+		template std::basic_string<unsigned char> DataSource<unsigned char>::advanceN(size_t n); 
+
+		template <typename CharT>
+		StringDataSource<CharT>::StringDataSource(const std::basic_string<CharT> & input) : _input(input) {}
+		template StringDataSource<char>::StringDataSource(std::basic_string<char> const&);
+		template StringDataSource<unsigned char>::StringDataSource(std::basic_string<unsigned char> const&);
+
+		template <typename CharT>
+		CharT StringDataSource<CharT>::advance() {
 			if (_index >= _input.size()) {
 				return EOF;
 			}
-			_previous = _input[_index++];
-			return _previous;
+			this->_previous = _input[_index++];
+			return this->_previous;
 		}
-		char StringDataSource::peek() {
+		template char StringDataSource<char>::advance();
+		template unsigned char StringDataSource<unsigned char>::advance();
+
+		template <typename CharT>
+		CharT StringDataSource<CharT>::peek() {
 			if (_index >= _input.size()) {
 				return EOF;
 			}
 			return _input[_index];
 		}
-		bool StringDataSource::isAtEnd() {
+		template char StringDataSource<char>::peek();
+		template unsigned char StringDataSource<unsigned char>::peek();
+
+		template <typename CharT>
+		bool StringDataSource<CharT>::isAtEnd() {
 			return _index >= _input.size();
 		}
+		template bool StringDataSource<char>::isAtEnd();
+		template bool StringDataSource<unsigned char>::isAtEnd();
+
 		FileDataSource::FileDataSource(const std::string& filename) : _ifstream(filename) {
 			if (!_ifstream.is_open()) {
 				_isAtEnd = true;
