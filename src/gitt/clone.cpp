@@ -17,7 +17,7 @@ namespace clone
 	}
 
 
-
+	template<typename CharT = char>
 	packstring fetch_packfile(const std::string& url, HeadRef head) {
 		/*std::string upload_pack_url = std::format("{}/git-upload-pack", url);
 		std::string body = build_negotiation_body(head);
@@ -58,11 +58,12 @@ namespace clone
 		if (r.status_code != 200 || r.text.empty()) {
 			throw std::runtime_error("Failed to fetch packfile");
 		}
-		return packstring{ r.text.begin(), r.text.end() };
+		return std::basic_string<CharT>{ r.text.begin(), r.text.end() };
+		
 	}
 
-	
-	PackHeader extract_packHeader(packstring const& packData)
+	template <class CharT = char>
+	PackHeader extract_packHeader(std::basic_string<CharT> const& packData)
 	{
 		if (packData.size() < 12) throw std::runtime_error("Invlid packfile size");
 
@@ -109,6 +110,24 @@ namespace clone
 			//Move To Next Object
 			objectOffset += dataCompressed.size(); 
 		}
+	}
+
+	GitPackParser::GitPackParser(const std::string& inputPack): 
+		_input(inputPack), 
+		_dataSource(std::make_shared<internal::StringDataSource<>>(inputPack))
+	{
+		init_map();
+	}
+
+	PackHeader GitPackParser::parseHeader()
+	{
+		auto res = extract_packHeader(this->_input);
+		this->_dataSource->advanceN(commands::constants::clone::objectsBeginPos);
+		return res;
+	}
+
+	void GitPackParser::init_map()
+	{
 	}
 
 }

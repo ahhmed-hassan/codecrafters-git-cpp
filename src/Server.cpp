@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
 	auto url = "https://github.com/git/git";
 	url = "https://github.com/git/git-reference";
 	auto g = clone::internal::parse_refs_info(clone::internal::get_refs_info());
-	auto head = clone::get_head(url);
+	//auto head = clone::get_head(url);
 
 	try {
 		//clone::packstring packfile = clone::fetch_packfile(url, head);

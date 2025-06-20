@@ -18,9 +18,9 @@ namespace clone
         uint32_t version{};
         uint32_t objectCount{};
     };
-    HeadRef get_head(std::string const& url); 
-    packstring fetch_packfile(const std::string& url,  HeadRef head);
-    PackHeader extract_packHeader(packstring const& packData);
+    //HeadRef get_head(std::string const& url); 
+    //packstring fetch_packfile(const std::string& url,  HeadRef head);
+    //PackHeader extract_packHeader(packstring const& packData);
     void process_packfile(packstring const& packData);
     class GitPackParser {
     public:
@@ -30,10 +30,14 @@ namespace clone
     private:
         std::shared_ptr<internal::DataSource<>> _dataSource;
         std::string _input;
-        size_t parseHeader();
+        std::unordered_map<std::string, GitObject> _parsedMap{};
+
+    private:
+        PackHeader parseHeader();
         std::string parseHash20();
         std::tuple<size_t, size_t, ObjectType> parseObjectHeader();
         std::pair<GitObject, size_t> parseNextObject(Bytef* rawData, z_stream* stream, int& zlibReturn);
+        void init_map(); 
     };
 
  
