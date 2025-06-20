@@ -95,7 +95,9 @@ int main() {
 	else if (command == "cat-file") {
 		std::string option = args[2];
 		std::string arg = args[3];
-		return commands::cat(args[2], args[3]);
+		auto res = commands::cat(args[2], args[3]);
+		return convert_expected(res, true); 
+
 	}
 	else if (command == "hash-object")
 	{
