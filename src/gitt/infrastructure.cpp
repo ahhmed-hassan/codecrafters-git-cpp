@@ -221,8 +221,9 @@ namespace clone
 
 				// 2. Get base object content using your existing utilities
 				//BUG: Not working now return the object here
-				std::string base_obj = commands::cat( "-p", base_sha);
-
+				auto catResult = commands::cat( "-p", base_sha);
+				if (!catResult) throw std::runtime_error(catResult.error());
+				std::string base_obj = catResult.value();
 				// 3. Apply delta instructions
 				size_t delta_pos = 0;
 

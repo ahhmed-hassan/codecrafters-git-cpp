@@ -157,9 +157,9 @@ namespace commands
 
 	}
 
-	int cat(std::string option, std::string args)
+	std::expected<std::string, std::string> cat(std::string option, std::string args)
 	{
-		if (option != "-p") { std::cerr << "Unknown command!\n"; return EXIT_FAILURE; }
+		if (option != "-p") { std::cerr << "Unknown command!\n"; return std::unexpected("Unknown command!\n"); }
 		std::filesystem::path const blobPath = constants::objectsDir / std::filesystem::path(args.substr(0, 2)) / args.substr(2);
 		try {
 			zstr::ifstream input(blobPath.string(), std::ios::binary);
@@ -168,23 +168,23 @@ namespace commands
 
 			if (auto const firstNotNull = objectStr.find('\0'); firstNotNull != std::string::npos) {
 				std::string const content = objectStr.substr(firstNotNull + 1);
-				std::cout << content << std::flush;
-				return EXIT_SUCCESS;
+				//std::cout << content << std::flush;
+				return content;
 			}
 
-			else { return EXIT_FAILURE; }
+			else { return std::unexpected("Not finding the null charachter in the object"); }
 
 		}
 		catch (const std::filesystem::filesystem_error& e) {
-			std::println(std::cerr, "{}"sv, e.what());
-			return EXIT_FAILURE;
+			//std::println(std::cerr, "{}"sv, e.what());
+			return std::unexpected(std::format("Filesystem error {} :", e.what()));
 		}
 		catch (const std::exception e)
 		{
-			std::println(std::cerr, "{}"sv, e.what());
-			return EXIT_FAILURE;
+			//std::println(std::cerr, "{}"sv, e.what());
+			return std::unexpected(e.what());
 		}
-		return 0;
+		return std::unexpected("Unknown failure in cat");;
 	}
 
 	std::expected<std::string, std::string> hash(std::filesystem::path const& path, bool wrtiteThebject, bool print)
