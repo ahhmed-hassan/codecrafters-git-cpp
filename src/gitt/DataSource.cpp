@@ -38,7 +38,7 @@ namespace clone
 		template unsigned char StringDataSource<unsigned char>::advance();
 
 		template <typename CharT>
-		CharT StringDataSource<CharT>::peek() {
+		CharT StringDataSource<CharT>::peek()  {
 			if (_index >= _input.size()) {
 				return EOF;
 			}
@@ -54,30 +54,51 @@ namespace clone
 		template bool StringDataSource<char>::isAtEnd();
 		template bool StringDataSource<unsigned char>::isAtEnd();
 
-		FileDataSource::FileDataSource(const std::string& filename) : _ifstream(filename) {
+		
+		template <typename CharT>
+		//HACK:Does the conversion make sense? 
+		FileDataSource<CharT>::FileDataSource(const std::basic_string<CharT>& filename) : _ifstream(std::string{ filename.begin(), filename.end() }) {
 			if (!_ifstream.is_open()) {
 				_isAtEnd = true;
 			}
 		}
-		FileDataSource::~FileDataSource() {
+		template FileDataSource<char>::FileDataSource(std::basic_string<char> const& );
+		template FileDataSource<unsigned char>::FileDataSource(std::basic_string<unsigned char> const&);
+
+		template <typename CharT>
+		FileDataSource<CharT>::~FileDataSource() {
 			if (_ifstream.is_open()) {
 				_ifstream.close();
 			}
 		}
-		char FileDataSource::advance() {
-			char ch;
+		template FileDataSource<char>::~FileDataSource();
+		template FileDataSource<unsigned char>::~FileDataSource();
+
+		template <typename CharT>
+		CharT FileDataSource<CharT>::advance() {
+			CharT ch;
 			if (!_ifstream.get(ch)) {
 				_isAtEnd = true;
 				return EOF;
 			}
-			_previous = ch;
+			this->_previous = ch;
 			return ch;
 		}
-		char FileDataSource::peek() {
+		template char FileDataSource<char>::advance();
+		template unsigned char FileDataSource<unsigned char>::advance();
+
+		template <typename CharT>
+		CharT FileDataSource<CharT>::peek() {
 			return _ifstream.peek();
 		}
-		bool FileDataSource::isAtEnd() {
+		template char FileDataSource<char>::peek();
+		template unsigned char FileDataSource<unsigned char>::peek();
+
+		template <typename CharT>
+		bool FileDataSource<CharT>::isAtEnd() {
 			return peek() == EOF;
 		}
+		template bool FileDataSource<char>::isAtEnd(); 
+		template bool FileDataSource<unsigned char>::isAtEnd(); 
 	}
 }
