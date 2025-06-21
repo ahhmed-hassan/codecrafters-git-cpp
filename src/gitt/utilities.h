@@ -8,7 +8,7 @@ namespace commands
 	{
 		std::string sha1_hash(const std::string& content);
 
-
+		//TODO::Make it templated
 		std::string zlib_compressed_str(std::string const& input);
 		std::string zlib_compressed_str(std::basic_string<unsigned char> const& input);
 

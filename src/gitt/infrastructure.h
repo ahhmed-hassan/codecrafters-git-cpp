@@ -13,6 +13,7 @@ namespace clone
 {
 	using packstring = std::basic_string<unsigned char>;
 	using packstring_view = std::basic_string_view<unsigned char>;
+
 	namespace internal
 	{
 

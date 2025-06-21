@@ -214,94 +214,94 @@ namespace clone
 
 		std::string apply_ref_delta(const packstring& baseRef, const packstring& delta_data)
 		{
-			
-				// 1. Convert binary SHA to hex
-				auto bin_sha_to_hex = [](const packstring& bin_sha) -> std::string {
-					std::ostringstream oss;
-					for (unsigned char c : bin_sha) {
-						oss << std::hex << std::setw(2) << std::setfill('0')
-							<< static_cast<int>(c);
+
+			// 1. Convert binary SHA to hex
+			auto bin_sha_to_hex = [](const packstring& bin_sha) -> std::string {
+				std::ostringstream oss;
+				for (unsigned char c : bin_sha) {
+					oss << std::hex << std::setw(2) << std::setfill('0')
+						<< static_cast<int>(c);
+				}
+				return oss.str();
+				};
+
+			std::string base_sha = bin_sha_to_hex(baseRef);
+
+			// 2. Get base object content using your existing utilities
+			//BUG: Not working now return the object here
+			auto catResult = commands::cat("-p", base_sha);
+			if (!catResult) throw std::runtime_error(catResult.error());
+			std::string base_obj = catResult.value();
+			// 3. Apply delta instructions
+			size_t delta_pos = 0;
+
+			// Read base and result sizes (variable-length integers)
+			auto read_varint = [&]() -> uint64_t {
+				uint64_t value = 0;
+				int shift = 0;
+				unsigned char byte;
+				do {
+					if (delta_pos >= delta_data.size()) {
+						throw std::runtime_error("Unexpected end of delta data");
 					}
-					return oss.str();
-					};
+					byte = delta_data[delta_pos++];
+					value |= static_cast<uint64_t>(byte & 0x7F) << shift;
+					shift += 7;
+				} while (byte & 0x80);
+				return value;
+				};
 
-				std::string base_sha = bin_sha_to_hex(baseRef);
+			uint64_t base_size = read_varint();
+			uint64_t result_size = read_varint();
 
-				// 2. Get base object content using your existing utilities
-				//BUG: Not working now return the object here
-				auto catResult = commands::cat( "-p", base_sha);
-				if (!catResult) throw std::runtime_error(catResult.error());
-				std::string base_obj = catResult.value();
-				// 3. Apply delta instructions
-				size_t delta_pos = 0;
+			if (base_size != base_obj.size()) {
+				throw std::runtime_error("Base size mismatch");
+			}
 
-				// Read base and result sizes (variable-length integers)
-				auto read_varint = [&]() -> uint64_t {
-					uint64_t value = 0;
-					int shift = 0;
-					unsigned char byte;
-					do {
-						if (delta_pos >= delta_data.size()) {
-							throw std::runtime_error("Unexpected end of delta data");
+			std::string result;
+			result.reserve(result_size);
+
+			// Process delta instructions
+			while (delta_pos < delta_data.size()) {
+				unsigned char inst = delta_data[delta_pos++];
+
+				// Add instruction
+				if ((inst & 0x80) == 0) {
+					uint64_t length = inst;
+					if (length > 0) {
+						if (delta_pos + length > delta_data.size()) {
+							throw std::runtime_error("Invalid add instruction");
 						}
-						byte = delta_data[delta_pos++];
-						value |= static_cast<uint64_t>(byte & 0x7F) << shift;
-						shift += 7;
-					} while (byte & 0x80);
-					return value;
-					};
-
-				uint64_t base_size = read_varint();
-				uint64_t result_size = read_varint();
-
-				if (base_size != base_obj.size()) {
-					throw std::runtime_error("Base size mismatch");
-				}
-
-				std::string result;
-				result.reserve(result_size);
-
-				// Process delta instructions
-				while (delta_pos < delta_data.size()) {
-					unsigned char inst = delta_data[delta_pos++];
-
-					// Add instruction
-					if ((inst & 0x80) == 0) {
-						uint64_t length = inst;
-						if (length > 0) {
-							if (delta_pos + length > delta_data.size()) {
-								throw std::runtime_error("Invalid add instruction");
-							}
-							result.append(reinterpret_cast<const char*>(
-								&delta_data[delta_pos]), length);
-							delta_pos += length;
-						}
-					}
-					// Copy instruction (simplified for initial implementation)
-					else {
-						// For now, just copy the entire base object
-						// (We'll implement proper copy later)
-						result.append(base_obj);
+						result.append(reinterpret_cast<const char*>(
+							&delta_data[delta_pos]), length);
+						delta_pos += length;
 					}
 				}
-
-				if (result.size() != result_size) {
-					throw std::runtime_error("Result size mismatch");
+				// Copy instruction (simplified for initial implementation)
+				else {
+					// For now, just copy the entire base object
+					// (We'll implement proper copy later)
+					result.append(base_obj);
 				}
+			}
 
-				return result;
-			};
-		
-		
+			if (result.size() != result_size) {
+				throw std::runtime_error("Result size mismatch");
+			}
+
+			return result;
+		};
+
+
 		void process_non_deltified(ObjectHeader const& header, packstring const& data)
 		{
 			if (header.is_deltified()) throw std::runtime_error("This function shall be only called or non deltified objects");
 
 			std::string dataStr(data.begin(), data.end());
-			
+
 			auto dataStream = std::istringstream(dataStr);
 			zstr::istream fileStream(dataStream);
-			
+
 			//To Be compatible with hash_and_save funciton we should for ease of use decompress the content in the pack string, then computes the header + the content
 			//and give it to the function to compute it as any content to hash. (Please note we are not computing anything here. The data is alreday ready. We are just populating to the database)
 			std::string const uncompressedData{ std::istream_iterator<char>(fileStream), std::istream_iterator<char>() };
@@ -324,10 +324,28 @@ namespace clone
 		}
 	}
 
-	bool GitObject::is_not_deltified() const { return internal::is_not_deltified(type); }; 
+#pragma region PackObjectHeader
 	bool PackObjectHeader::is_not_deltified() const { return internal::is_not_deltified(type); };
+#pragma endregion
+
+
+
+#pragma region GitObject
+	bool GitObject::is_not_deltified() const { return internal::is_not_deltified(type); };
 	std::string GitObject::get_type_for_non_deltiifed() const {
-		assert(is_not_deltified()); 
+		assert(is_not_deltified());
 		return internal::objecttype_to_str(type);
 	}
+#pragma endregion
+
+
+
+#pragma region DeltaRefInstruction
+	bool is_copy(DeltaRefInstruction const instruction)
+	{
+		return std::holds_alternative<CopyInstruction>(instruction);
+	}
+#pragma endregion
+
+
 }

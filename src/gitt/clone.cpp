@@ -9,6 +9,8 @@
 
 namespace clone
 {
+	template <typename CharT = char>
+	using DatasourcePtr = std::shared_ptr<internal::DataSource<CharT>>;
 	HeadRef get_head(std::string const& url)
 	{
 		auto response = internal::get_refs_info(url);
@@ -60,7 +62,7 @@ namespace clone
 			throw std::runtime_error("Failed to fetch packfile");
 		}
 		return std::basic_string<CharT>{ r.text.begin(), r.text.end() };
-		
+
 	}
 
 	template <class CharT = char>
@@ -78,7 +80,7 @@ namespace clone
 
 
 #pragma region Headerverification
-		if(std::memcmp(header.magic, magicPack.data(), sizeof(magicPack.data()) != 0))
+		if (std::memcmp(header.magic, magicPack.data(), sizeof(magicPack.data()) != 0))
 			throw std::runtime_error("Invalid packfile singature");
 
 		if (std::ranges::find(acceptableVersions, header.version) == std::end(acceptableVersions))
@@ -91,34 +93,130 @@ namespace clone
 
 	void process_packfile(packstring const& packData)
 	{
-		PackHeader packHeader = extract_packHeader(packData); 
+		PackHeader packHeader = extract_packHeader(packData);
 
-		size_t objectOffset = commands::constants::clone::objectsBeginPos; 
+		size_t objectOffset = commands::constants::clone::objectsBeginPos;
 		for (uint32_t i{}; i < packHeader.objectCount; i++)
 		{
-			internal::ObjectHeader objHeader = internal::get_object_header_beginning_at(packData, objectOffset); 
+			internal::ObjectHeader objHeader = internal::get_object_header_beginning_at(packData, objectOffset);
 
 			//Move to the actual compressed Data for the header
-			objectOffset += objHeader.headerBytes; 
+			objectOffset += objHeader.headerBytes;
 
 			auto dataCompressed = packData.substr(
 				objectOffset,
 				packData.size() - objectOffset - 20
 			);
-			
+
 			internal::process_git_object(objHeader.is_deltified(), dataCompressed);
 
 			//Move To Next Object
-			objectOffset += dataCompressed.size(); 
+			objectOffset += dataCompressed.size();
 		}
 	}
 
-	
+	namespace internal
+	{
+		size_t parse_variable_length_size(
+			DatasourcePtr<> const& src
+		)
+		{
+
+			const char last7Mask = 0x7F;
+			const char msbMask = 0x80;
+			auto currentByte = src->advance();
+			auto keepParsingg = [msbMask](char currentByte) {
+				return (msbMask & currentByte) != 0;  };
+			size_t currentSize = 0;
+			currentSize += static_cast<unsigned char>(last7Mask & currentByte);
+			size_t bitsInSize = 7;
+			while (keepParsingg(currentByte)) {
+				currentByte = src->advance();
+				auto next = static_cast<unsigned char>(last7Mask & currentByte);
+				currentSize += (next << bitsInSize);
+				bitsInSize += 7;
+			}
+			return currentSize;
+
+		}
+
+
+	}
+
 	namespace delta
 	{
-		void resolveDeltaRefs(
+		DeltaRefInstruction parse_next_deltarefinstruction(
+			DatasourcePtr<> const& src
+		)
+		{
+			char command = src->advance();
+			const char msbMask = 0x80;
+			bool isCopy = (msbMask & command) != 0;
+			size_t copySize = 0;
+			size_t copyOffset = 0;
+			size_t numInsertBytes = 0;
+			std::string newData = "";
+			DeltaRefInstruction res{};
+			if (isCopy) {
+				const char offsetMask = 0x0F;
+				std::array<std::pair<uint8_t, uint32_t>, 3> const shiftsMap{
+					std::make_pair(0x10,0),
+					{ 0x20, 8},
+					{ 0x40, 16 },
+				};
+
+				std::array<std::pair<uint8_t, uint32_t>, 3> const offsetMap{
+					std::make_pair(0x01,0),
+					{ 0x02, 8},
+					{ 0x04, 16 },
+				};
+				auto getShiftsFromMapAndCommand = [command](std::array<std::pair<uint8_t, uint32_t>, 3> const map)
+					-> std::vector<uint32_t> {
+					return map | std::views::filter([command](auto pair) {
+						return (command & pair.first) != 0; })
+						| std::views::values
+						| std::ranges::to<std::vector<uint32_t>>();
+					};
+				auto sizeShifts = getShiftsFromMapAndCommand(shiftsMap);
+
+
+				// bytes in offset (bits 0-3)
+				auto offsetShifts = getShiftsFromMapAndCommand(offsetMap);
+
+
+				for (auto shift : offsetShifts) {
+					auto next = static_cast<unsigned char>(src->advance());
+					copyOffset += (static_cast<size_t>(next) << shift);
+				}
+				for (auto shift : sizeShifts) {
+					auto next = static_cast<unsigned char>(src->advance());
+					copySize += (static_cast<size_t>(next) << shift);
+				}
+				return CopyInstruction{ .offset = copyOffset, .size = copySize };
+			}
+			else {
+				// bytes to insert (bites 0-6)
+				const char last7Mask = 0x7F;
+				numInsertBytes = static_cast<size_t>(command & last7Mask);
+				// Parse the bytes to insert
+				for (size_t i = 0; i < numInsertBytes; ++i) {
+					newData.push_back(src->advance());
+				}
+				return InsertInstruction{
+					.numBytesToInsert = numInsertBytes ,
+					 .dataToInsert = std::move(newData),
+				};
+
+			}
+			
+		}
+
+		void resolve_delta_refs(
 			std::unordered_map<std::string, GitObject>& objectMap,
-			std::list<GitObject>& deltaRefs){}
+			std::list<GitObject>& deltaRefs
+		)
+		{}
+
 	}
 
 #pragma region GitPackParser
@@ -144,7 +242,7 @@ namespace clone
 		stream.avail_in = _input.size() - 20;
 		stream.next_in = rawData;
 		if (inflateInit(&stream) != Z_OK) {
-			return std::unexpected{"Failed to initalize zlib decompression"};
+			return std::unexpected{ "Failed to initalize zlib decompression" };
 		}
 
 		int zlibReturn = Z_OK;
@@ -189,11 +287,11 @@ namespace clone
 			// std::cerr << result.uncompressedData << std::endl;
 			if (result.type == ObjectType::BLOB || result.type == ObjectType::TREE || result.type == ObjectType::COMMIT) {
 				// Adds object header
-				auto typeAsStr = result.get_type_for_non_deltiifed(); 
+				auto typeAsStr = result.get_type_for_non_deltiifed();
 				auto objectToCompress = typeAsStr + std::to_string(result.uncompressedData.size()) + '\0' + result.uncompressedData;
 				auto hashResult = commands::utilities::hash_and_save(objectToCompress, false);
 				if (!hashResult.has_value()) return std::unexpected(hashResult.error());
-				result.hash = hashResult.value(); 
+				result.hash = hashResult.value();
 				std::string compressionError;
 				// TODO: Check error here?
 				result.compressedData = commands::utilities::zlib_compressed_str(objectToCompress);
@@ -208,15 +306,16 @@ namespace clone
 			delete[] buffer;
 			if (zlibReturn == Z_STREAM_ERROR) {
 				return std::unexpected("Failure to decompress object: " + std::to_string(zlibReturn));
-				}
+			}
 		}
 		inflateEnd(&stream);
 		if (zlibReturn != Z_STREAM_END) {
 			return std::unexpected("Zlib stream did not finish at end: " + std::to_string(zlibReturn));
 		}
-		delta::resolveDeltaRefs(objectMap, deltaRefs);
+		delta::resolve_delta_refs(objectMap, deltaRefs);
 		return objectMap;
 	}
+	//TODO:: USe compress function from zlib
 #else 
 	auto GitPackParser::parse_bin_pack() -> std::expected<std::unordered_map<std::string, GitObject>, std::string>
 	{
