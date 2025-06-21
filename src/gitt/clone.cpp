@@ -552,7 +552,7 @@ namespace clone
 
 			for (const auto& [hash, object] : parser)
 			{
-				auto objectPath = commands::utilities::create_directories_and_get_path_from_hash(hash);
+				auto objectPath = commands::utilities::create_directories_and_get_path_from_hash(hash, targetPath);
 				std::ofstream(objectPath, std::ios::binary) << object.compressedData;
 
 			}
