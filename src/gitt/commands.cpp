@@ -301,6 +301,7 @@ namespace commands
 		std::string authorPart = std::format("author {} <{}> {} {:%z}\n", authorName, authorMail, epochSeconds, zt);
 		std::string msgPart = msg ? "\n" + msg.value() : "";
 
+		//TODO: Use commitContentStart constant instead of hard coded tree. 
 		std::string content = std::format("tree {}\n{}{}{}{}\n", treeHash, parentPart, authorPart, commiterPart, msgPart);
 		std::string endValue = "commit " + std::to_string(content.size()) + '\0' + content;
 
