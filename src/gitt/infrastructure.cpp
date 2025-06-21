@@ -345,6 +345,13 @@ namespace clone
 	{
 		return std::holds_alternative<CopyInstruction>(instruction);
 	}
+
+	std::string CopyInstruction::apply_delta(const std::string& referencedString) const
+	{
+		return referencedString.substr(this->offset, this->size);
+	}
+
+
 #pragma endregion
 
 

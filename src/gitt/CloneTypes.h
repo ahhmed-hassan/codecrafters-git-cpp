@@ -54,12 +54,14 @@ namespace clone
         size_t offset{};
         // Number of size bytes gleaned from bits 4-6, can be 1,2,4
         size_t size{};
+        std::string apply_delta(std::string const& reference) const; 
     };
 
     struct InsertInstruction
     {
         size_t numBytesToInsert{};
         std::string dataToInsert{};
+        //std::string apply_delta() const; 
     };
     using DeltaRefInstruction = std::variant<CopyInstruction, InsertInstruction>;
 };
