@@ -33,6 +33,8 @@ namespace clone
         ObjectType type;
         std::string compressedData;
         std::string uncompressedData;
+        bool is_not_deltified() const; 
+        std::string get_type_for_non_deltiifed() const;
     };
 
     struct PackObjectHeader
@@ -40,5 +42,7 @@ namespace clone
         size_t decompressedSize; 
         size_t bytesParsed{}; 
         ObjectType type{}; 
+        bool is_not_deltified() const; 
+        
     };
 }

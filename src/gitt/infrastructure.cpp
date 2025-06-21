@@ -136,6 +136,13 @@ namespace clone
 			}
 		}
 
+		bool is_not_deltified(ObjectType objType)
+		{
+			return objType == ObjectType::COMMIT ||
+				objType == ObjectType::TREE ||
+				objType == ObjectType::BLOB;
+		}
+
 		void process_git_object(bool is_deltified, packstring const& data)
 		{
 		}
@@ -315,5 +322,12 @@ namespace clone
 			}
 			return r.text;
 		}
+	}
+
+	bool GitObject::is_not_deltified() const { return internal::is_not_deltified(type); }; 
+	bool PackObjectHeader::is_not_deltified() const { return internal::is_not_deltified(type); };
+	std::string GitObject::get_type_for_non_deltiifed() const {
+		assert(is_not_deltified()); 
+		return internal::objecttype_to_str(type);
 	}
 }
