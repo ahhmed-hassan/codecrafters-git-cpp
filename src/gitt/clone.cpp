@@ -5,12 +5,13 @@
 #include "constants.h"
 #include "utilities.h"
 #include "clone.h"
-//#include "commands.h"
+#include "commands.h"
 
 namespace clone
 {
 	template <typename CharT = char>
 	using DatasourcePtr = std::shared_ptr<internal::DataSource<CharT>>;
+
 	HeadRef get_head(std::string const& url)
 	{
 		auto response = internal::get_refs_info(url);
@@ -21,7 +22,9 @@ namespace clone
 
 
 	template<typename CharT = char>
-	std::basic_string<CharT> fetch_packfile(const std::string& url, HeadRef head) {
+	std::basic_string<CharT> fetch_packfile(
+		const std::string& url,
+		HeadRef head) {
 		/*std::string upload_pack_url = std::format("{}/git-upload-pack", url);
 		std::string body = build_negotiation_body(head);
 		std::println(std::cout, "Body\n-------------\n{}", body);
@@ -140,7 +143,29 @@ namespace clone
 
 		}
 
-
+		std::string hash_20_to_40(
+			DatasourcePtr<> const& ds
+		)
+		{
+			auto toHexChar = [](unsigned char in) -> std::string {
+				if (in > 15) throw std::out_of_range("Value out of hex range");
+				return std::format("{:x}", in); };
+			std::ostringstream oss;
+			for (size_t i = 0; i < 20; ++i) {
+				char next = ds->advance();
+				char second = next & 0x0F;
+				char first = (next >> 4) & 0x0F;
+				oss << toHexChar(first) << toHexChar(second);
+			}
+			return oss.str();
+		}
+		//TODO: Reverse the function so that the former one depends on it to avoid the unnecessary initializiation of the shared_ptr
+		std::string hash_20_to_40(
+			const std::string& hash20
+		)
+		{
+			return hash_20_to_40(std::make_shared<StringDataSource<>>(hash20));
+		}
 	}
 
 	namespace delta
@@ -296,12 +321,14 @@ namespace clone
 
 	}
 
+
+
 #pragma region GitPackParser
 	GitPackParser::GitPackParser(const std::string& inputPack) :
 		_input(inputPack),
 		_dataSource(std::make_shared<internal::StringDataSource<>>(inputPack))
 	{
-		auto map =  this->parse_bin_pack();
+		auto map = this->parse_bin_pack();
 		if (!map) throw std::runtime_error(map.error());
 		_parsedMap = map.value();
 	}
@@ -394,9 +421,10 @@ namespace clone
 		delta::resolve_delta_refs(objectMap, deltaRefs);
 		return objectMap;
 	}
-	
+
 	//TODO:: USe compress function from zlib
 #else 
+	//TODO::USe zlib compress 
 	auto GitPackParser::parse_bin_pack() -> std::expected<std::unordered_map<std::string, GitObject>, std::string>
 	{
 		return std::expected<std::unordered_map<std::string, GitObject>, std::string>();
@@ -404,15 +432,27 @@ namespace clone
 
 #endif // DEBUG
 
-auto GitPackParser::begin() const
+	auto GitPackParser::begin() const
+
 	{
-	return _parsedMap.begin(); 
+		return _parsedMap.begin();
 	}
 
-auto GitPackParser::end() const
-{
-	return _parsedMap.end();
-}
+	auto GitPackParser::end() const
+	{
+		return _parsedMap.end();
+	}
+
+	
+	auto const& GitPackParser::map() const
+	{
+		return _parsedMap;
+	}
+	bool GitPackParser::has(std::string sha) const
+	{
+		return map().contains(sha);
+	}
+
 	PackHeader GitPackParser::parse_header()
 	{
 		auto res = extract_packHeader(this->_input);
@@ -422,18 +462,7 @@ auto GitPackParser::end() const
 
 	std::string GitPackParser::parse_hash_20()
 	{
-		auto toHexChar = [](unsigned char in) -> std::string {
-			if (in > 15) throw std::out_of_range("Value out of hex range");
-			return std::format("{:x}", in); };
-		// Parse 20 bytes, turning each one into 2 hexademical characters
-		std::ostringstream oss;
-		for (size_t i = 0; i < 20; ++i) {
-			char next = _dataSource->advance();
-			char second = next & 0x0F;
-			char first = (next >> 4) & 0x0F;
-			oss << toHexChar(first) << toHexChar(second);
-		}
-		return oss.str();
+		return internal::hash_20_to_40(_dataSource);
 	}
 
 	PackObjectHeader GitPackParser::parse_objectHeader()
@@ -466,7 +495,108 @@ auto GitPackParser::end() const
 			.type = objectType };
 	}
 
-
-	
-}
 #pragma endregion
+
+
+	void writeHeadFiles(
+		const std::unordered_map<std::string, GitObject>& objects,
+		const std::filesystem::path& currentPath,
+		const GitObject& object) {
+		if (object.type == ObjectType::BLOB) {
+			std::ofstream(currentPath, std::ios::binary) << object.uncompressedData;
+			return;
+		}
+		if (object.type == ObjectType::TREE) {
+			const auto& d = object.uncompressedData;
+			size_t current = 0;
+			// size_t n = d.size();
+			auto nextSpace = d.find(' ');
+			auto nextNull = d.find('\0');
+			while (nextSpace != std::string::npos && nextNull != std::string::npos) {
+				auto filename = d.substr(nextSpace + 1, nextNull - nextSpace - 1);
+				auto hash20 = d.substr(nextNull + 1, 20);
+				auto hash40 = internal::hash_20_to_40(hash20);
+				if (objects.count(hash40) != 0) {
+					auto nextObject = objects.at(hash40);
+					auto newPath = currentPath / filename;
+					if (nextObject.type == ObjectType::TREE) {
+						std::filesystem::create_directory(newPath);
+					}
+					writeHeadFiles(objects, newPath, nextObject);
+				}
+				nextSpace = d.find(' ', nextNull + 21);
+				nextNull = d.find('\0', nextNull + 21);
+			}
+		}
+	}
+
+	std::expected<std::string, std::string> clone(std::string const url)
+	{
+		using std::unexpected;
+
+		auto head = clone::get_head(url);
+		auto packString = clone::fetch_packfile<char>(url, head);
+		std::filesystem::path targetPath = std::filesystem::current_path() / "/tmp/bin_pack";
+		std::ofstream(targetPath, std::ios::binary) << packString;
+
+		std::ifstream file(packString, std::ios::in | std::ios::binary);
+		std::ostringstream oss{};
+		oss << file.rdbuf();
+		std::string finalPack = oss.str();
+
+		try
+		{
+			auto const parser = GitPackParser(packString);
+			int res = commands::init();
+			if (res == EXIT_FAILURE) return std::unexpected("Failure in init");
+
+			for (const auto& [hash, object] : parser)
+			{
+				auto objectPath = commands::utilities::create_directories_and_get_path_from_hash(hash);
+				std::ofstream(objectPath, std::ios::binary) << object.compressedData;
+
+			}
+			if (!parser.map().contains(head.sha()))
+			{
+				return std::unexpected(
+					std::format(
+						"Cannot find this head sha \t {}  in those parsed OBjects!!",
+						head.sha()));
+			}
+			auto headObject = parser.map().at(head.sha());
+			if (headObject.type != ObjectType::COMMIT)
+			{
+				return unexpected("Head object eas not a commit!");
+			}
+			auto headTreeSha = headObject.uncompressedData.substr(
+				commands::constants::hardCodedCommitVals::commitContentStart.size(),
+				commands::constants::sha1Size * 2
+			);
+			if (!parser.has(headTreeSha))
+			{
+				return unexpected(
+					std::format(
+						"Cannot find this heads'tree \t{} in the parsed objects",
+						headTreeSha
+					)
+				);
+			}
+			auto headTreeObject = parser.map().at(headTreeSha); 
+			if (headTreeObject.type != ObjectType::TREE)
+			{
+				return unexpected("Head tree object should be a TREE"); 
+			}
+			writeHeadFiles(parser.map(), targetPath, headTreeObject);
+			return {};
+		}
+		catch (std::runtime_error& e)
+		{
+			return std::unexpected(e.what());
+		}
+
+
+		
+	}
+
+}
+
