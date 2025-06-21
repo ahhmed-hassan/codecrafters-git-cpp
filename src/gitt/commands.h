@@ -1,9 +1,9 @@
 #pragma once
+#include <filesystem>
+#include <map>
 #include<string>
 #include<string_view>
-#include <filesystem>
 #include <vector>
-#include <map>
 
 
 #include <expected>
@@ -12,33 +12,34 @@ namespace commands
 
 	struct Tree
 	{
-		std::string perm_{}; 
-		std::string name_{}; 
-		std::string shaHash_{}; 
-		Tree() = default; 
+		std::string perm_{};
+		std::string name_{};
+		std::string shaHash_{};
+		Tree() = default;
 		Tree(std::string_view perm, std::string_view name, std::string_view hash);
-		Tree(std::filesystem::directory_entry const& de, std::string const& hash); 
+		Tree(std::filesystem::directory_entry const& de, std::string const& hash);
 	};
 	int init();
 	std::expected<std::string, std::string> cat(std::string option, std::string args);
 	/*
-	* Realizing of git hash-object -w for some given path. 
+	* Realizing of git hash-object -w for some given path.
 	*/
 	std::expected<std::string, std::string> hash(std::filesystem::path const& path, bool wrtiteThebject, bool print);
-	
-	
-	int ls_tree(std::string args, bool namesOnly); 
-	int write_tree(std::filesystem::path path = "." );
-	int commmit(std::string const treeHash, std::optional<std::string> parentTreeHash, std::optional<std::string> message = std::nullopt);
+
+
+	int ls_tree(std::string args, bool namesOnly);
+	int write_tree(std::filesystem::path path = ".");
+	auto commmit(std::string const treeHash, std::optional<std::string> parentTreeHash, std::optional<std::string> message = std::nullopt)
+		-> std::expected<std::string, std::string>;
 	namespace utilities
 	{
 		/*
 		*Hashes the given content
-		* @parameter toHash: The uncompressed string to hash 
-		* @paramater save: If true: The compressed content would be stored in the objects database. 
-		* @return the sha hash of the content 
+		* @parameter toHash: The uncompressed string to hash
+		* @paramater save: If true: The compressed content would be stored in the objects database.
+		* @return the sha hash of the content
 		*/
-		std::expected<std::string, std::string> hash_and_save(std::string const& toHash, bool save=true);
+		std::expected<std::string, std::string> hash_and_save(std::string const& toHash, bool save = true);
 		[[nodiscard]] std::vector<Tree> parse_trees(std::string const& treeHash);
 	}
 }
