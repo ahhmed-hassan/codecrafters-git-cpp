@@ -23,6 +23,7 @@ namespace clone
         };
         
        
+        //TODO: implement begin and end to make an interator sentintel pair here. 
         template <typename CharT= char>
         class StringDataSource : public DataSource<CharT> {
         public:

@@ -223,6 +223,26 @@ namespace clone
 			return std::visit(appliedFunction, instruction);
 		
 		}
+
+		std::string build_deltadata_from_instructions(const std::string& instructions, const std::string& referencedData) {
+			auto ds = std::make_shared<internal::StringDataSource<>>(instructions);
+			auto s1 = internal::parse_variable_length_size(ds);
+			auto s2 = internal::parse_variable_length_size(ds);
+			if (s1 != referencedData.size()) {
+				std::cerr << "Parsed size does not match referenced size! " << s1 << " " << referencedData.size() << " " << referencedData << std::endl;
+			}
+			auto appliedFunction = overload(
+				[&referencedData](CopyInstruction const& copy) {return copy.apply_delta(referencedData); },
+				[](InsertInstruction const& insert) {return insert.dataToInsert; }
+			);
+			std::ostringstream oss;
+			while (!ds->isAtEnd()) {
+				auto instr = parse_next_deltarefinstruction(ds);
+				oss << std::visit(appliedFunction, instr);
+			}
+			return oss.str();
+		}
+
 		void resolve_delta_refs(
 			std::unordered_map<std::string, GitObject>& objectMap,
 			std::list<GitObject>& deltaRefs
