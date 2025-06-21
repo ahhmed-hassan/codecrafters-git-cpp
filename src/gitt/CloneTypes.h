@@ -34,4 +34,11 @@ namespace clone
         std::string compressedData;
         std::string uncompressedData;
     };
+
+    struct PackObjectHeader
+    {
+        size_t decompressedSize; 
+        size_t bytesParsed{}; 
+        ObjectType type{}; 
+    };
 }
