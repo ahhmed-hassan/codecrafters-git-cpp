@@ -137,7 +137,10 @@ int main() {
 		}
 
 
-		return commands::commmit(treeHash, parentTreeHash, msg);
+		return convert_expected(
+			commands::commmit(treeHash, parentTreeHash, msg), 
+			true
+			);
 	}
 	else if (command == "clone")
 	{
