@@ -35,7 +35,7 @@ namespace clone
     private:
         PackHeader parseHeader();
         std::string parseHash20();
-        std::tuple<size_t, size_t, ObjectType> parseObjectHeader();
+        PackObjectHeader parseObjectHeader();
         std::pair<GitObject, size_t> parseNextObject(Bytef* rawData, z_stream* stream, int& zlibReturn);
         void init_map(); 
     };

@@ -18,7 +18,7 @@ namespace clone
 
 
 	template<typename CharT = char>
-	packstring fetch_packfile(const std::string& url, HeadRef head) {
+	std::basic_string<CharT> fetch_packfile(const std::string& url, HeadRef head) {
 		/*std::string upload_pack_url = std::format("{}/git-upload-pack", url);
 		std::string body = build_negotiation_body(head);
 		std::println(std::cout, "Body\n-------------\n{}", body);
@@ -124,6 +124,36 @@ namespace clone
 		auto res = extract_packHeader(this->_input);
 		this->_dataSource->advanceN(commands::constants::clone::objectsBeginPos);
 		return res;
+	}
+
+	PackObjectHeader GitPackParser::parseObjectHeader()
+	{
+		char currentByte = _dataSource->advance();
+		size_t bytesParsed = 1;
+		size_t currentSize = 0;
+		constexpr char msbMask = 0x80;
+		constexpr char typeMask = 0x70;
+		constexpr char last4Mask = 0x0F;
+		constexpr char last7Mask = 0x7F;
+		char typeChar = (typeMask & currentByte) >> 4;
+		auto objectType = static_cast<ObjectType>(typeChar);
+		
+		//bool keepParsing = (msbMask & currentByte) != 0;
+		auto keepParsing = [msbMask](char currentByte) {return (msbMask & currentByte) != 0; };
+		currentSize += static_cast<unsigned char>(last4Mask & currentByte);
+		size_t bitsInSize = 4;
+		while (keepParsing(currentByte)) {
+			currentByte = _dataSource->advance();
+			++bytesParsed;
+			//keepParsing = (msbMask & currentByte) != 0;
+			auto next = static_cast<unsigned char>(last7Mask & currentByte);
+			currentSize += (next << bitsInSize);
+			bitsInSize += 7;
+		}
+		return PackObjectHeader{
+			.decompressedSize= currentSize,
+			.bytesParsed = bytesParsed,
+			.type= objectType };
 	}
 
 	void GitPackParser::init_map()
