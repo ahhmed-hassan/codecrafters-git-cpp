@@ -46,6 +46,14 @@ namespace clone
 
     };
 
+
+    struct PackHeader
+    {
+        char magic[4]{};
+        uint32_t version{};
+        uint32_t objectCount{};
+    };
+
     struct CopyInstruction
     {
         // Copy instructions
