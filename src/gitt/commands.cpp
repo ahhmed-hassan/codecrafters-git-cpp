@@ -18,13 +18,13 @@
 
 namespace commands
 {
-	namespace fs = std::filesystem; 
+	namespace fs = std::filesystem;
 	using namespace std::string_literals;
 	using namespace std::string_view_literals;
 
 	namespace utilities
 	{
-		
+
 		std::vector<Tree> parse_trees(std::string const& treeHash)
 		{
 			auto const treeFilePath = constants::objectsDir / treeHash.substr(0, 2) / treeHash.substr(2);
@@ -91,7 +91,7 @@ namespace commands
 
 			return std::vector<Tree>();
 		}
-	
+
 		std::string hexToByteString(const std::string& hex) {
 			std::string cleanHex;
 
@@ -125,10 +125,10 @@ namespace commands
 
 			return byteStr;
 		}
-	
-		
 
-}
+
+
+	}
 	int init()
 	{
 
@@ -189,7 +189,7 @@ namespace commands
 
 	std::expected<std::string, std::string> hash(std::filesystem::path const& path, bool wrtiteThebject, bool print)
 	{
-		try 
+		try
 		{
 			std::ifstream file(path);
 			try
@@ -203,17 +203,17 @@ namespace commands
 			}
 			catch (const std::bad_alloc& e)
 			{
-				if(print) std::println(std::cerr, "{}", e.what());
+				if (print) std::println(std::cerr, "{}", e.what());
 				return std::unexpected{ std::format("{}", e.what()) };
 			}
 
 		}
 		catch (std::filesystem::filesystem_error const& e)
 		{
-			if(print) std::println(std::cerr, "Cannot open the file {}", e.what());
+			if (print) std::println(std::cerr, "Cannot open the file {}", e.what());
 			return std::unexpected{ std::format("{}", e.what()) };
 		}
-		
+
 	}
 
 	int ls_tree(std::string args, bool namesOnly)
@@ -223,19 +223,19 @@ namespace commands
 		auto projection = namesOnly ? [](const Tree& t) {return t.name_; } : tree_printer;
 		for (auto&& x : std::views::transform(entries, projection))
 		{
-			std::println(std::cout, "{}", x); 
+			std::println(std::cout, "{}", x);
 		}
 
 		return EXIT_SUCCESS;
 	}
 
-	std::expected<std::string,std::string> write_tree_and_get_hash(fs::path const& pathToTree) noexcept
+	std::expected<std::string, std::string> write_tree_and_get_hash(fs::path const& pathToTree) noexcept
 	{
-		if (fs::is_empty(pathToTree) &&fs::is_directory(pathToTree))
+		if (fs::is_empty(pathToTree) && fs::is_directory(pathToTree))
 			return {};
 
 		std::vector<fs::directory_entry> vec{};
-		
+
 		for (auto const& de : fs::directory_iterator(pathToTree))
 			if (!fs::is_directory(de) || (!fs::is_empty(de) && fs::is_directory(de) && de.path().filename() != ".git"))
 				vec.push_back(de);
@@ -260,34 +260,38 @@ namespace commands
 			});
 
 		auto trees = entriesHashe
-			| std::views::transform([](HashAndEntry const&  x) -> Tree {return Tree(x.e, x.hash); })
-			|std::ranges::to<std::vector>();
-		
+			| std::views::transform([](HashAndEntry const& x) -> Tree {return Tree(x.e, x.hash); })
+			| std::ranges::to<std::vector>();
+
 		auto treeConverter = [](const Tree& t) ->std::string
 			{return std::string(t.perm_) + " " + t.name_ + '\0' + t.shaHash_; };
 
 		auto vectorOfContent = trees | std::views::transform(treeConverter);
-		std::string const content = std::ranges::fold_left(vectorOfContent, std::string{}, std::plus()); 
+		std::string const content = std::ranges::fold_left(vectorOfContent, std::string{}, std::plus());
 		std::string header = "tree ";
-		
+
 		auto endValue = header + std::to_string(content.size()) + '\0' + content;
 		return utilities::hash_and_save(endValue, true);
-	
+
 	}
-	
+
 	int write_tree(std::filesystem::path path)
 	{
 		if (auto res = write_tree_and_get_hash(path); res.has_value())
 		{
 			std::cout << res.value(); return EXIT_SUCCESS;
 		}
-		else 
+		else
 		{
-			std::println(std::cout, "{}", res.error()); return EXIT_FAILURE; 
+			std::println(std::cout, "{}", res.error()); return EXIT_FAILURE;
 		}
 	}
 
-	int commmit(std::string const treeHash, std::optional<std::string> parentTreeHas, std::optional<std::string> msg)
+	auto commmit(
+		std::string const treeHash,
+		std::optional<std::string> parentTreeHas,
+		std::optional<std::string> msg
+	) -> std::expected<std::string, std::string>
 	{
 		using namespace constants::hardCodedCommitVals;
 		using namespace std::chrono;
@@ -296,7 +300,7 @@ namespace commands
 		zoned_time zt{ current_zone(), now };  // Local time + offset
 		auto epochSeconds = duration_cast<seconds>(now.time_since_epoch()).count();
 
-		std::string parentPart = parentTreeHas ? std::format("parent {}\n"sv, parentTreeHas.value()) : std::string{}; 
+		std::string parentPart = parentTreeHas ? std::format("parent {}\n"sv, parentTreeHas.value()) : std::string{};
 		std::string commiterPart = std::format("committer {} <{}> {} {:%z}\n", committerName, committerMail, epochSeconds, zt);
 		std::string authorPart = std::format("author {} <{}> {} {:%z}\n", authorName, authorMail, epochSeconds, zt);
 		std::string msgPart = msg ? "\n" + msg.value() : "";
@@ -305,18 +309,12 @@ namespace commands
 		std::string content = std::format("tree {}\n{}{}{}{}\n", treeHash, parentPart, authorPart, commiterPart, msgPart);
 		std::string endValue = "commit " + std::to_string(content.size()) + '\0' + content;
 
-		if (auto commitHash = utilities::hash_and_save(endValue, true); commitHash)
-		{
-			std::println(std::cout, "{}", commitHash.value()); return EXIT_SUCCESS;
-		}
-		else
-		{
-			std::println(std::cerr, "{}", commitHash.error()); return EXIT_FAILURE;
-		}
+		auto commitHash = utilities::hash_and_save(endValue, true);
+		return commitHash;
 	}
-	
 
-	Tree::Tree(std::string_view perm, std::string_view name, std::string_view hash): perm_(perm), name_(name), shaHash_(hash)
+
+	Tree::Tree(std::string_view perm, std::string_view name, std::string_view hash) : perm_(perm), name_(name), shaHash_(hash)
 	{
 	}
 
@@ -331,7 +329,7 @@ namespace commands
 				else if (fs::is_symlink(e)) return constants::gitTreeConsts::symbolink;
 				else return constants::gitTreeConsts::excutableFile;
 			};
-		name_ = name; perm_ = get_mode(de); shaHash_ = hash; 
+		name_ = name; perm_ = get_mode(de); shaHash_ = hash;
 	}
 
 
