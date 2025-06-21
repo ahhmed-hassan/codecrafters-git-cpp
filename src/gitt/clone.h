@@ -33,7 +33,7 @@ namespace clone
         PackHeader parse_header();
         std::string parse_hash_20();
         PackObjectHeader parse_objectHeader();
-        std::pair<GitObject, size_t> parseNextObject(Bytef* rawData, z_stream* stream, int& zlibReturn);
+        //std::pair<GitObject, size_t> parseNextObject(Bytef* rawData, z_stream* stream, int& zlibReturn);
         void init_map(); 
     };
 
