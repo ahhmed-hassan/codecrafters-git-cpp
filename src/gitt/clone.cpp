@@ -208,11 +208,11 @@ namespace clone
 				};
 
 			}
-			
+
 		}
 
 		std::string apply_delta(
-			const DeltaRefInstruction& instruction, 
+			const DeltaRefInstruction& instruction,
 			const std::string& referenced
 		)
 		{
@@ -221,13 +221,14 @@ namespace clone
 				[](InsertInstruction const& insert) {return insert.dataToInsert; }
 			);
 			return std::visit(appliedFunction, instruction);
-		
+
 		}
 
 		std::string build_deltadata_from_instructions(const std::string& instructions, const std::string& referencedData) {
 			auto ds = std::make_shared<internal::StringDataSource<>>(instructions);
 			auto s1 = internal::parse_variable_length_size(ds);
-			auto s2 = internal::parse_variable_length_size(ds);
+			//Just to advance the data source
+			internal::parse_variable_length_size(ds);
 			if (s1 != referencedData.size()) {
 				std::cerr << "Parsed size does not match referenced size! " << s1 << " " << referencedData.size() << " " << referencedData << std::endl;
 			}
@@ -243,11 +244,55 @@ namespace clone
 			return oss.str();
 		}
 
+		GitObject build_object_from_reference(
+			const GitObject& deltaRef,
+			const GitObject& referencedObject) {
+			GitObject finalObject;
+			finalObject.type = referencedObject.type;
+			finalObject.uncompressedData = build_deltadata_from_instructions(deltaRef.uncompressedData, referencedObject.uncompressedData);
+
+			auto dataToCompress = finalObject.get_type_for_non_deltiifed() + std::to_string(finalObject.uncompressedData.size()) +
+				'\0' + finalObject.uncompressedData;
+
+			finalObject.compressedData = commands::utilities::zlib_compressed_str(dataToCompress);
+			auto hash = commands::utilities::hash_and_save(dataToCompress, false);
+			if (!hash) throw std::runtime_error(hash.error());
+			finalObject.hash = hash.value();
+			return finalObject;
+		}
+
 		void resolve_delta_refs(
 			std::unordered_map<std::string, GitObject>& objectMap,
 			std::list<GitObject>& deltaRefs
 		)
-		{}
+		{
+			// Infinite loop checking...keep track of the size of the deltaRef list
+			// each time we dequeue a ref. If we dequeue a ref and it has an existing
+			// size that is <= the prior size in this graph, we have hit an infinite loop.
+			std::unordered_map<std::string, size_t> sizeWhenFailed;
+			while (!deltaRefs.empty()) {
+				auto nextRef = deltaRefs.front();
+				deltaRefs.pop_front();
+				auto referencedHash = nextRef.hash;
+				if (objectMap.count(referencedHash) == 0) {
+					deltaRefs.push_back(nextRef);
+					// Can't dereference this hash yet.
+					if (sizeWhenFailed.count(referencedHash) != 0 && sizeWhenFailed.at(referencedHash) <= deltaRefs.size()) {
+						std::cerr << "Could not find reference for hash: " << referencedHash << " and it looks like an infinite loop!" << std::endl;
+						break;
+					}
+					else {
+						sizeWhenFailed[referencedHash] = deltaRefs.size();
+						continue;
+					}
+				}
+				else {
+					auto referencedObject = objectMap.at(referencedHash);
+					auto newObject = build_object_from_reference(nextRef, referencedObject);
+					objectMap[newObject.hash] = newObject;
+				}
+			}
+		}
 
 	}
 
@@ -256,7 +301,9 @@ namespace clone
 		_input(inputPack),
 		_dataSource(std::make_shared<internal::StringDataSource<>>(inputPack))
 	{
-		init_map();
+		auto map =  this->parse_bin_pack();
+		if (!map) throw std::runtime_error(map.error());
+		_parsedMap = map.value();
 	}
 
 #ifdef ZLIB_LOWLEVEL
@@ -347,6 +394,7 @@ namespace clone
 		delta::resolve_delta_refs(objectMap, deltaRefs);
 		return objectMap;
 	}
+	
 	//TODO:: USe compress function from zlib
 #else 
 	auto GitPackParser::parse_bin_pack() -> std::expected<std::unordered_map<std::string, GitObject>, std::string>
@@ -356,7 +404,15 @@ namespace clone
 
 #endif // DEBUG
 
+auto GitPackParser::begin() const
+	{
+	return _parsedMap.begin(); 
+	}
 
+auto GitPackParser::end() const
+{
+	return _parsedMap.end();
+}
 	PackHeader GitPackParser::parse_header()
 	{
 		auto res = extract_packHeader(this->_input);
@@ -385,10 +441,10 @@ namespace clone
 		char currentByte = _dataSource->advance();
 		size_t bytesParsed = 1;
 		size_t currentSize = 0;
-		constexpr char msbMask = 0x80;
-		constexpr char typeMask = 0x70;
-		constexpr char last4Mask = 0x0F;
-		constexpr char last7Mask = 0x7F;
+		const char msbMask = 0x80;
+		const char typeMask = 0x70;
+		const char last4Mask = 0x0F;
+		const char last7Mask = 0x7F;
 		char typeChar = (typeMask & currentByte) >> 4;
 		auto objectType = static_cast<ObjectType>(typeChar);
 
@@ -411,9 +467,6 @@ namespace clone
 	}
 
 
-	void GitPackParser::init_map()
-	{
-	}
-
+	
 }
 #pragma endregion
