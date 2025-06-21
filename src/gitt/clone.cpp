@@ -126,6 +126,21 @@ namespace clone
 		return res;
 	}
 
+	std::string GitPackParser::parseHash20()
+	{
+		auto toHexChar = [](unsigned char in) -> std::string
+			{return std::format("{:x}", in); };
+		// Parse 20 bytes, turning each one into 2 hexademical characters
+		std::ostringstream oss;
+		for (size_t i = 0; i < 20; ++i) {
+			char next = _dataSource->advance();
+			char second = next & 0x0F;
+			char first = (next >> 4) & 0x0F;
+			oss << toHexChar(first) << toHexChar(second);
+		}
+		return oss.str();
+	}
+
 	PackObjectHeader GitPackParser::parseObjectHeader()
 	{
 		char currentByte = _dataSource->advance();
