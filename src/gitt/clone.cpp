@@ -211,6 +211,18 @@ namespace clone
 			
 		}
 
+		std::string apply_delta(
+			const DeltaRefInstruction& instruction, 
+			const std::string& referenced
+		)
+		{
+			auto appliedFunction = overload(
+				[&referenced](CopyInstruction const& copy) {return copy.apply_delta(referenced); },
+				[](InsertInstruction const& insert) {return insert.dataToInsert; }
+			);
+			return std::visit(appliedFunction, instruction);
+		
+		}
 		void resolve_delta_refs(
 			std::unordered_map<std::string, GitObject>& objectMap,
 			std::list<GitObject>& deltaRefs
