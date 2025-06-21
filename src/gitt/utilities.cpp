@@ -49,9 +49,12 @@ namespace commands
 			return compressed;
 		}
 
-		std::filesystem::path create_directories_and_get_path_from_hash(std::string const& objectHash)
+		std::filesystem::path create_directories_and_get_path_from_hash(
+			std::string const& objectHash, 
+			std::filesystem::path const& targetBeginPath
+			)
 		{
-			auto objectDirPath = constants::objectsDir / objectHash.substr(0, 2);
+			auto objectDirPath = targetBeginPath / constants::objectsDir / objectHash.substr(0, 2);
 			fs::create_directories(objectDirPath);
 			const auto filePath = objectDirPath / objectHash.substr(2);
 			return filePath;
