@@ -17,12 +17,15 @@ namespace clone
     class GitPackParser {
     public:
         GitPackParser(const std::string& inputPack);
-        auto parse_bin_pack() ->
-            std::expected<std::unordered_map<std::string, GitObject>, std::string>;
-
+       
+        //auto map() const; 
+        auto const& map() const; 
         auto begin() const; 
         auto end() const; 
+        bool has(std::string sha) const; 
     private:
+        auto parse_bin_pack() ->
+            std::expected<std::unordered_map<std::string, GitObject>, std::string>;
         std::shared_ptr<internal::DataSource<>> _dataSource;
         std::string _input;
         std::unordered_map<std::string, GitObject> _parsedMap{};
@@ -34,6 +37,6 @@ namespace clone
         
     };
 
- 
+    std::expected<std::string, std::string> clone(std::string const url);
 
 }

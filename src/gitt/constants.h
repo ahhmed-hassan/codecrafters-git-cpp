@@ -13,6 +13,7 @@ namespace commands
 		std::filesystem::path const head = gitDir / "HEAD";
 		namespace hardCodedCommitVals
 		{
+			std::string const commitContentStart{ "tree " };
 			std::string const committerName{ "FooBar" };
 			std::string const committerMail{ "FooBar@gmail.com" };
 			std::string const authorName{ committerName };

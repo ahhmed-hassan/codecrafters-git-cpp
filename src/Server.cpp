@@ -22,7 +22,7 @@ int convert_expected(const std::expected<Val, Err>& e, bool print)
 	}
 	else
 	{
-		std::cerr << e.value() << "\n";
+		std::cerr << e.error() << "\n";
 		return EXIT_FAILURE;
 	}
 };
@@ -138,6 +138,12 @@ int main() {
 
 
 		return commands::commmit(treeHash, parentTreeHash, msg);
+	}
+	else if (command == "clone")
+	{
+		std::string url = args[2];
+		auto res = clone::clone(url);
+		return convert_expected(res, true);
 	}
 	else {
 		std::cerr << "Unknown command " << command << '\n';
