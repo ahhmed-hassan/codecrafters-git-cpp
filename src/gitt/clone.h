@@ -8,10 +8,7 @@
 namespace clone
 {
  
-    /*auto refVisitor = overload{
-        [](const GitRef& gitref) {return std::make_tuple(gitref.name, gitref.object_id); },
-        [](HeadRef&& head) {return std::make_tuple(head.ref.name, head.ref.object_id, head.capabilities); }
-    };*/
+#define ZLIB_LOWLEVEL
     struct PackHeader
     {
         char magic[4]{};
@@ -25,7 +22,7 @@ namespace clone
     class GitPackParser {
     public:
         GitPackParser(const std::string& inputPack);
-        auto parseBinPack() ->
+        auto parse_bin_pack() ->
             std::expected<std::unordered_map<std::string, GitObject>, std::string>;
     private:
         std::shared_ptr<internal::DataSource<>> _dataSource;
@@ -33,9 +30,9 @@ namespace clone
         std::unordered_map<std::string, GitObject> _parsedMap{};
 
     private:
-        PackHeader parseHeader();
-        std::string parseHash20();
-        PackObjectHeader parseObjectHeader();
+        PackHeader parse_header();
+        std::string parse_hash_20();
+        PackObjectHeader parse_objectHeader();
         std::pair<GitObject, size_t> parseNextObject(Bytef* rawData, z_stream* stream, int& zlibReturn);
         void init_map(); 
     };
