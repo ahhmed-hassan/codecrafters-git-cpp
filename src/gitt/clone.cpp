@@ -236,18 +236,6 @@ namespace clone
 
 		}
 
-		std::string apply_delta(
-			const DeltaRefInstruction& instruction,
-			const std::string& referenced
-		)
-		{
-			auto appliedFunction = overload(
-				[&referenced](CopyInstruction const& copy) {return copy.apply_delta(referenced); },
-				[](InsertInstruction const& insert) {return insert.dataToInsert; }
-			);
-			return std::visit(appliedFunction, instruction);
-
-		}
 
 		std::string build_deltadata_from_instructions(const std::string& instructions, const std::string& referencedData) {
 			auto ds = std::make_shared<internal::StringDataSource<>>(instructions);
@@ -288,26 +276,26 @@ namespace clone
 
 		void resolve_delta_refs(
 			std::unordered_map<std::string, GitObject>& objectMap,
-			std::list<GitObject>& deltaRefs
+			std::queue<GitObject>& deltaRefs
 		)
 		{
 			// Infinite loop checking...keep track of the size of the deltaRef list
 			// each time we dequeue a ref. If we dequeue a ref and it has an existing
 			// size that is <= the prior size in this graph, we have hit an infinite loop.
-			std::unordered_map<std::string, size_t> sizeWhenFailed;
+			std::unordered_map<std::string, size_t> sizeOFdeltasWhenFailed;
 			while (!deltaRefs.empty()) {
 				auto nextRef = deltaRefs.front();
-				deltaRefs.pop_front();
+				deltaRefs.pop();
 				auto referencedHash = nextRef.hash;
 				if (objectMap.count(referencedHash) == 0) {
-					deltaRefs.push_back(nextRef);
+					deltaRefs.push(nextRef);
 					// Can't dereference this hash yet.
-					if (sizeWhenFailed.count(referencedHash) != 0 && sizeWhenFailed.at(referencedHash) <= deltaRefs.size()) {
+					if (sizeOFdeltasWhenFailed.count(referencedHash) != 0 && sizeOFdeltasWhenFailed.at(referencedHash) <= deltaRefs.size()) {
 						std::cerr << "Could not find reference for hash: " << referencedHash << " and it looks like an infinite loop!" << std::endl;
 						break;
 					}
 					else {
-						sizeWhenFailed[referencedHash] = deltaRefs.size();
+						sizeOFdeltasWhenFailed[referencedHash] = deltaRefs.size();
 						continue;
 					}
 				}
@@ -354,7 +342,7 @@ namespace clone
 		int zlibReturn = Z_OK;
 		int bytesRemaining = _input.size() - 20;
 		std::unordered_map<std::string, GitObject> objectMap;
-		std::list<GitObject> deltaRefs;
+		std::queue<GitObject> deltaRefs;
 		for (size_t i = 0; i < numObjects; ++i) {
 			inflateReset(&stream);
 			// auto [nextObject, bytesParsed] = parseNextObject(rawData, &stream, zlibReturn);
@@ -391,7 +379,7 @@ namespace clone
 				rawData += compressedBytesProcessed;
 			}
 			// std::cerr << result.uncompressedData << std::endl;
-			if (result.type == ObjectType::BLOB || result.type == ObjectType::TREE || result.type == ObjectType::COMMIT) {
+			if (result.is_not_deltified()) {
 				// Adds object header
 				auto typeAsStr = result.get_type_for_non_deltiifed();
 				auto objectToCompress = typeAsStr + std::to_string(result.uncompressedData.size()) + '\0' + result.uncompressedData;
@@ -404,7 +392,7 @@ namespace clone
 				objectMap[result.hash] = result;
 			}
 			else if (result.type == ObjectType::REF_DELTA) {
-				deltaRefs.push_back(result);
+				deltaRefs.push(result);
 			}
 			else {
 				std::cerr << "UNKNOWN OBJECT TYPE...skipping!" << std::endl;
