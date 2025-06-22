@@ -170,6 +170,17 @@ namespace clone
 
 	namespace delta
 	{
+		/**
+		*Delta Ref Isntruction ahs the following structure :
+		* [base_size] [target_size] [instruction1] [instruction2] ... [instructionN]
+		* instructon_i = [copy] | [insert]
+		* insert = [0[7bits number of bytes to be inserted]] [x bytes of data]
+		*
+		* copy = [1[4-6 3 bits of representing the existing size chunks][0-3 4 bits representing the exisitng offset]] [offset bytes] [size bytes]
+		* Examples of the copy [1 101	1001] [first offset chunk for the first one on righ] [Second offset chunk should be shifted with 8*3 = 24] [first size Chunk for most right size] [second size byte for the next existing size bit]
+		* 
+		* 
+		**/
 		DeltaRefInstruction parse_next_deltarefinstruction(
 			DatasourcePtr<> const& src
 		)
@@ -177,38 +188,45 @@ namespace clone
 			char command = src->advance();
 			const char msbMask = 0x80;
 			bool isCopy = (msbMask & command) != 0;
-			size_t copySize = 0;
-			size_t copyOffset = 0;
-			size_t numInsertBytes = 0;
-			std::string newData = "";
+
+
+
 			DeltaRefInstruction res{};
 			if (isCopy) {
+				
 				const char offsetMask = 0x0F;
-				std::array<std::pair<uint8_t, uint32_t>, 3> const shiftsMap{
+				/*
+				* As we try to parse variable length we should shift by the rank of this but * 8 
+				* So for example for 0x20 = 010 0000 , we know the size chunk for it would be shifted by 8 and added to whatever left or has alredy been parsed. 
+				* 
+				*/
+				std::array<std::pair<uint8_t, uint32_t>, 4> const sizeMap{
 					std::make_pair(0x10,0),
 					{ 0x20, 8},
 					{ 0x40, 16 },
 				};
 
-				std::array<std::pair<uint8_t, uint32_t>, 3> const offsetMap{
+				std::array<std::pair<uint8_t, uint32_t>, 4> const offsetMap{
 					std::make_pair(0x01,0),
 					{ 0x02, 8},
 					{ 0x04, 16 },
+					{0x08, 24},
 				};
-				auto getShiftsFromMapAndCommand = [command](std::array<std::pair<uint8_t, uint32_t>, 3> const map)
+				auto getShiftsFromMapAndCommand = [command](std::array<std::pair<uint8_t, uint32_t>, 4> const map)
 					-> std::vector<uint32_t> {
 					return map | std::views::filter([command](auto pair) {
 						return (command & pair.first) != 0; })
 						| std::views::values
 						| std::ranges::to<std::vector<uint32_t>>();
 					};
-				auto sizeShifts = getShiftsFromMapAndCommand(shiftsMap);
+				auto sizeShifts = getShiftsFromMapAndCommand(sizeMap);
 
 
 				// bytes in offset (bits 0-3)
 				auto offsetShifts = getShiftsFromMapAndCommand(offsetMap);
 
-
+				size_t copySize = 0;
+				size_t copyOffset = 0;
 				for (auto shift : offsetShifts) {
 					auto next = static_cast<unsigned char>(src->advance());
 					copyOffset += (static_cast<size_t>(next) << shift);
@@ -222,8 +240,9 @@ namespace clone
 			else {
 				// bytes to insert (bites 0-6)
 				const char last7Mask = 0x7F;
-				numInsertBytes = static_cast<size_t>(command & last7Mask);
+				size_t numInsertBytes = static_cast<size_t>(command & last7Mask);
 				// Parse the bytes to insert
+				std::string newData = "";
 				for (size_t i = 0; i < numInsertBytes; ++i) {
 					newData.push_back(src->advance());
 				}
@@ -273,9 +292,16 @@ namespace clone
 			finalObject.hash = hash.value();
 			return finalObject;
 		}
-
+		/**
+		* @brief resolves the passed refs and add them to the map.
+		* @postcondition : Map size = map size + queue size
+		*
+		* @param resolvedObjectMap the map that has all already resolved Objects
+		* @param deltaRefs :Refs to be resolved
+		*
+		**/
 		void resolve_delta_refs(
-			std::unordered_map<std::string, GitObject>& objectMap,
+			std::unordered_map<std::string, GitObject>& resolvedObjectMap,
 			std::queue<GitObject>& deltaRefs
 		)
 		{
@@ -287,22 +313,29 @@ namespace clone
 				auto nextRef = deltaRefs.front();
 				deltaRefs.pop();
 				auto referencedHash = nextRef.hash;
-				if (objectMap.count(referencedHash) == 0) {
+				if (resolvedObjectMap.contains(referencedHash)) {
+					auto referencedObject = resolvedObjectMap.at(referencedHash);
+					auto newObject = build_object_from_reference(nextRef, referencedObject);
+					resolvedObjectMap[newObject.hash] = newObject;
+				}
+				else {
+
 					deltaRefs.push(nextRef);
 					// Can't dereference this hash yet.
-					if (sizeOFdeltasWhenFailed.count(referencedHash) != 0 && sizeOFdeltasWhenFailed.at(referencedHash) <= deltaRefs.size()) {
+					if (
+						sizeOFdeltasWhenFailed.contains(referencedHash) &&
+						//It is okay to fail again and thus we can expect to fine the referencedHash multple times, but the question is are we making progrss? 
+						// i.e, Are we resolving some deltas since last time we have seen this object? 
+						sizeOFdeltasWhenFailed.at(referencedHash) <= deltaRefs.size()
+						) {
 						std::cerr << "Could not find reference for hash: " << referencedHash << " and it looks like an infinite loop!" << std::endl;
 						break;
 					}
-					else {
+					else { //This is the first time we fail.. 
 						sizeOFdeltasWhenFailed[referencedHash] = deltaRefs.size();
 						continue;
 					}
-				}
-				else {
-					auto referencedObject = objectMap.at(referencedHash);
-					auto newObject = build_object_from_reference(nextRef, referencedObject);
-					objectMap[newObject.hash] = newObject;
+
 				}
 			}
 		}
@@ -431,7 +464,7 @@ namespace clone
 		return _parsedMap.end();
 	}
 
-	
+
 	auto const& GitPackParser::map() const
 	{
 		return _parsedMap;
@@ -569,10 +602,10 @@ namespace clone
 					)
 				);
 			}
-			auto headTreeObject = parser.map().at(headTreeSha); 
+			auto headTreeObject = parser.map().at(headTreeSha);
 			if (headTreeObject.type != ObjectType::TREE)
 			{
-				return unexpected("Head tree object should be a TREE"); 
+				return unexpected("Head tree object should be a TREE");
 			}
 			writeHeadFiles(parser.map(), targetPath, headTreeObject);
 			return {};
@@ -583,8 +616,8 @@ namespace clone
 		}
 
 
-		
+
 	}
 
-}
+	}
 
