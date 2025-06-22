@@ -69,7 +69,6 @@ namespace clone
     {
         size_t numBytesToInsert{};
         std::string dataToInsert{};
-        //std::string apply_delta() const; 
     };
     using DeltaRefInstruction = std::variant<CopyInstruction, InsertInstruction>;
 };
