@@ -10,10 +10,10 @@ file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.hpp)
 
 find_package(OpenSSL REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(CPR CONFIG REQUIRED)
-if (cpr_FOUND)
-    message(STATUS "Found cpr: ${cpr_CONFIG} (found version ${cpr_VERSION})")
-endif ()
+
+set ( CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local/lib/cmake)
+find_package ( CPR REQUIRED )
+include_directories ( ${CPR_INCLUDE_DIRS} )
 
 add_executable(git ${SOURCE_FILES})
 
