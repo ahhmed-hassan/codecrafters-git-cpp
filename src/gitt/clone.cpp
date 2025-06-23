@@ -443,7 +443,7 @@ namespace commands
 			if (allResolvedObjects.size() != allObjectsCount)
 				return std::unexpected("There is a dicrepancy between the objects that should be parsed");
 
-			return objectMap;
+			return allResolvedObjects;
 		}
 
 		//TODO:: USe compress function from zlib
