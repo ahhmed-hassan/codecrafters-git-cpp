@@ -64,17 +64,6 @@ namespace commands
 					auto sha_raw = blob.substr(pos, constants::sha1Size);
 					pos += constants::sha1Size;
 
-					// turn the 20 bytes into hex
-					auto to_hex = [](std::string_view sha)->std::string
-						{
-							std::ostringstream hexout{};
-							hexout << std::hex << std::setfill('0');
-							for (auto b : sha)
-								hexout << std::setw(2) << (int)static_cast<uint8_t>(b);
-							return hexout.str();
-						};
-
-
 					entries.push_back({ std::move(mode),
 										std::move(name),
 										sha_raw
