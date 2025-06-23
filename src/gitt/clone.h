@@ -5,38 +5,41 @@
 #include "infrastructure.h"
 #include "Datasource.h"
 #include <cstdint>
-namespace clone
+namespace commands
 {
- 
+    namespace clone
+    {
+
 #define ZLIB_LOWLEVEL
 
-    //HeadRef get_head(std::string const& url); 
-    //packstring fetch_packfile(const std::string& url,  HeadRef head);
-    //PackHeader extract_packHeader(packstring const& packData);
-    //void process_packfile(packstring const& packData);
-    class GitPackParser {
-    public:
-        GitPackParser(const std::string& inputPack);
-       
-        //auto map() const; 
-        auto const& map() const; 
-        auto begin() const; 
-        auto end() const; 
-        bool has(std::string sha) const; 
-    private:
-        auto parse_bin_pack() ->
-            std::expected<std::unordered_map<std::string, GitObject>, std::string>;
-        std::shared_ptr<internal::DataSource<>> _dataSource;
-        std::string _input;
-        std::unordered_map<std::string, GitObject> _parsedMap{};
+        //HeadRef get_head(std::string const& url); 
+        //packstring fetch_packfile(const std::string& url,  HeadRef head);
+        //PackHeader extract_packHeader(packstring const& packData);
+        //void process_packfile(packstring const& packData);
+        class GitPackParser {
+        public:
+            GitPackParser(const std::string& inputPack);
 
-    private:
-        PackHeader parse_header();
-        std::string parse_hash_20();
-        PackObjectHeader parse_objectHeader();
-        
-    };
+            //auto map() const; 
+            auto const& map() const;
+            auto begin() const;
+            auto end() const;
+            bool has(std::string sha) const;
+        private:
+            auto parse_bin_pack() ->
+                std::expected<std::unordered_map<std::string, GitObject>, std::string>;
+            std::shared_ptr<internal::DataSource<>> _dataSource;
+            std::string _input;
+            std::unordered_map<std::string, GitObject> _parsedMap{};
 
-    std::expected<std::string, std::string> clone(std::string const url);
+        private:
+            PackHeader parse_header();
+            std::string parse_hash_20();
+            PackObjectHeader parse_objectHeader();
 
+        };
+
+        std::expected<std::string, std::string> clone(std::string const url);
+
+    }
 }

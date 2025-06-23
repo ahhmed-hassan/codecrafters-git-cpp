@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
 	std::vector<std::string> args(argv, argv + argc);
 	auto url = "https://github.com/git/git";
 	url = "https://github.com/git/git-reference";
-	auto g = clone::internal::parse_refs_info(clone::internal::get_refs_info());
+	auto g = commands::clone::internal::parse_refs_info(commands::clone::internal::get_refs_info());
 	//auto head = clone::get_head(url);
 
 	try {
@@ -145,7 +145,7 @@ int main() {
 	else if (command == "clone")
 	{
 		std::string url = args[2];
-		auto res = clone::clone(url);
+		auto res = commands::clone::clone(url);
 		return convert_expected(res, true);
 	}
 	else {
