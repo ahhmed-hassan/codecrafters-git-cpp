@@ -178,8 +178,8 @@ namespace clone
 		*
 		* copy = [1[4-6 3 bits of representing the existing size chunks][0-3 4 bits representing the exisitng offset]] [offset bytes] [size bytes]
 		* Examples of the copy [1 101	1001] [first offset chunk for the first one on righ] [Second offset chunk should be shifted with 8*3 = 24] [first size Chunk for most right size] [second size byte for the next existing size bit]
-		* 
-		* 
+		*
+		*
 		**/
 		DeltaRefInstruction parse_next_deltarefinstruction(
 			DatasourcePtr<> const& src
@@ -187,18 +187,13 @@ namespace clone
 		{
 			char command = src->advance();
 			const char msbMask = 0x80;
-			bool isCopy = (msbMask & command) != 0;
+			if (bool isCopy = (msbMask & command) != 0; isCopy) {
 
-
-
-			DeltaRefInstruction res{};
-			if (isCopy) {
-				
 				const char offsetMask = 0x0F;
 				/*
-				* As we try to parse variable length we should shift by the rank of this but * 8 
-				* So for example for 0x20 = 010 0000 , we know the size chunk for it would be shifted by 8 and added to whatever left or has alredy been parsed. 
-				* 
+				* As we try to parse variable length we should shift by the rank of this but * 8
+				* So for example for 0x20 = 010 0000 , we know the size chunk for it would be shifted by 8 and added to whatever left or has alredy been parsed.
+				*
 				*/
 				std::array<std::pair<uint8_t, uint32_t>, 4> const sizeMap{
 					std::make_pair(0x10,0),
@@ -212,6 +207,7 @@ namespace clone
 					{ 0x04, 16 },
 					{0x08, 24},
 				};
+
 				auto getShiftsFromMapAndCommand = [command](std::array<std::pair<uint8_t, uint32_t>, 4> const map)
 					-> std::vector<uint32_t> {
 					return map | std::views::filter([command](auto pair) {
@@ -227,8 +223,10 @@ namespace clone
 
 				size_t copySize = 0;
 				size_t copyOffset = 0;
+				bool multiplyNotShift(false);
 				for (auto shift : offsetShifts) {
 					auto next = static_cast<unsigned char>(src->advance());
+					//TODO: Replace with copyOffset += static_cast<size_t>(next) * std::pow(2, shift);
 					copyOffset += (static_cast<size_t>(next) << shift);
 				}
 				for (auto shift : sizeShifts) {
@@ -250,28 +248,27 @@ namespace clone
 					.numBytesToInsert = numInsertBytes ,
 					 .dataToInsert = std::move(newData),
 				};
-
 			}
-
 		}
 
 
 		std::string build_deltadata_from_instructions(const std::string& instructions, const std::string& referencedData) {
 			auto ds = std::make_shared<internal::StringDataSource<>>(instructions);
+			//Parse base size
 			auto s1 = internal::parse_variable_length_size(ds);
-			//Just to advance the data source
+			//Parsing the target size
 			internal::parse_variable_length_size(ds);
 			if (s1 != referencedData.size()) {
 				std::cerr << "Parsed size does not match referenced size! " << s1 << " " << referencedData.size() << " " << referencedData << std::endl;
 			}
-			auto appliedFunction = overload(
-				[&referencedData](CopyInstruction const& copy) {return copy.apply_delta(referencedData); },
+			auto applyDelta = overload(
+				[&referencedData = std::as_const(referencedData)](CopyInstruction const& copy) {return copy.apply_delta(referencedData); },
 				[](InsertInstruction const& insert) {return insert.dataToInsert; }
 			);
 			std::ostringstream oss;
 			while (!ds->isAtEnd()) {
 				auto instr = parse_next_deltarefinstruction(ds);
-				oss << std::visit(appliedFunction, instr);
+				oss << std::visit(applyDelta, instr);
 			}
 			return oss.str();
 		}
@@ -299,6 +296,9 @@ namespace clone
 		* @param resolvedObjectMap the map that has all already resolved Objects
 		* @param deltaRefs :Refs to be resolved
 		*
+		* Alternatively this can be thought of as topolgical sorting where each delta is a node,
+		* where deltas can only reference nodes that has no edges where edge from n to m
+		* means that n is delta and m is base or delta, where deltas have no outgoing edges
 		**/
 		void resolve_delta_refs(
 			std::unordered_map<std::string, GitObject>& resolvedObjectMap,
@@ -499,6 +499,7 @@ namespace clone
 		auto objectType = static_cast<ObjectType>(typeChar);
 
 		//bool keepParsing = (msbMask & currentByte) != 0;
+#pragma region Parse Variable Length size
 		auto keepParsing = [msbMask](char currentByte) {return (msbMask & currentByte) != 0; };
 		currentSize += static_cast<unsigned char>(last4Mask & currentByte);
 		size_t bitsInSize = 4;
@@ -510,6 +511,8 @@ namespace clone
 			currentSize += (next << bitsInSize);
 			bitsInSize += 7;
 		}
+#pragma endregion
+
 		return PackObjectHeader{
 			.decompressedSize = currentSize,
 			.bytesParsed = bytesParsed,
@@ -518,21 +521,31 @@ namespace clone
 
 #pragma endregion
 
-
+	/**
+	* Write the user files in the currentPath
+	* @param objects: the objects map from sha to the GitObject
+	* @param currentPath: A path to write the object
+	* @param object : Target Object to be written
+	* @precondiiton : The path already exists before calling the function
+	*
+	*/
 	void writeHeadFiles(
 		const std::unordered_map<std::string, GitObject>& objects,
 		const std::filesystem::path& currentPath,
 		const GitObject& object) {
-		if (object.type == ObjectType::BLOB) {
+		if (object.type == ObjectType::BLOB)/*Base case*/ {
 			std::ofstream(currentPath, std::ios::binary) << object.uncompressedData;
 			return;
 		}
 		if (object.type == ObjectType::TREE) {
 			const auto& d = object.uncompressedData;
 			size_t current = 0;
-			// size_t n = d.size();
+			/*TreeFile : [TreeEnry]
+			* TreeEntry = "{perm} {name}\0{}hash"
+			*/
 			auto nextSpace = d.find(' ');
 			auto nextNull = d.find('\0');
+			//TODO :Refactor line by line
 			while (nextSpace != std::string::npos && nextNull != std::string::npos) {
 				auto filename = d.substr(nextSpace + 1, nextNull - nextSpace - 1);
 				auto hash20 = d.substr(nextNull + 1, 20);
@@ -544,6 +557,10 @@ namespace clone
 						std::filesystem::create_directory(newPath);
 					}
 					writeHeadFiles(objects, newPath, nextObject);
+				}
+				else
+				{
+					std::println(std::cerr, "Trying to write a hash:\t {} that is not not in the map! ", hash40);
 				}
 				nextSpace = d.find(' ', nextNull + 21);
 				nextNull = d.find('\0', nextNull + 21);
@@ -619,5 +636,5 @@ namespace clone
 
 	}
 
-	}
+}
 
