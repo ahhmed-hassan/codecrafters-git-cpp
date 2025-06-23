@@ -300,23 +300,22 @@ namespace commands
 			* where deltas can only reference nodes that has no edges where edge from n to m
 			* means that n is delta and m is base or delta, where deltas have no outgoing edges
 			**/
-			void resolve_delta_refs(
-				std::unordered_map<std::string, GitObject>& resolvedObjectMap,
+			[[nodiscard]] auto resolve_delta_refs(
+				const std::unordered_map<std::string, GitObject>& baseObjectsMap,
 				std::queue<GitObject>& deltaRefs
-			)
+			) -> std::unordered_map<std::string, GitObject>
 			{
-				// Infinite loop checking...keep track of the size of the deltaRef list
-				// each time we dequeue a ref. If we dequeue a ref and it has an existing
-				// size that is <= the prior size in this graph, we have hit an infinite loop.
-				std::unordered_map<std::string, size_t> sizeOFdeltasWhenFailed;
+				std::unordered_map<std::string, size_t> sizeOFdeltasWhenFailed{};
+				std::unordered_map<std::string, GitObject>allResolvedObjects{ baseObjectsMap };
 				while (!deltaRefs.empty()) {
 					auto nextRef = deltaRefs.front();
 					deltaRefs.pop();
 					auto referencedHash = nextRef.hash;
-					if (resolvedObjectMap.contains(referencedHash)) {
-						auto referencedObject = resolvedObjectMap.at(referencedHash);
+					if (allResolvedObjects.contains(referencedHash)) {
+						auto referencedObject = allResolvedObjects.at(referencedHash);
 						auto newObject = build_object_from_reference(nextRef, referencedObject);
-						resolvedObjectMap[newObject.hash] = newObject;
+						auto [_ , emplaced] = allResolvedObjects.try_emplace(newObject.hash,newObject);
+						if (!emplaced) std::cerr << std::format("{} was already resolved!", newObject.hash);
 					}
 					else {
 
@@ -333,11 +332,11 @@ namespace commands
 						}
 						else { //This is the first time we fail.. 
 							sizeOFdeltasWhenFailed[referencedHash] = deltaRefs.size();
-							continue;
 						}
 
 					}
 				}
+				return allResolvedObjects; 
 			}
 
 		}
@@ -439,7 +438,11 @@ namespace commands
 			if (zlibReturn != Z_STREAM_END) {
 				return std::unexpected("Zlib stream did not finish at end: " + std::to_string(zlibReturn));
 			}
-			delta::resolve_delta_refs(objectMap, deltaRefs);
+			size_t const allObjectsCount = objectMap.size() + deltaRefs.size(); 
+			auto allResolvedObjects = delta::resolve_delta_refs(objectMap, deltaRefs);
+			if (allResolvedObjects.size() != allObjectsCount)
+				return std::unexpected("There is a dicrepancy between the objects that should be parsed");
+
 			return objectMap;
 		}
 
