@@ -79,7 +79,7 @@ namespace commands
 			return objectHash;
 
 		}
-		auto to_hex(std::string_view sha) -> std::string
+		auto binary_sha_to_hex(std::string sha) -> std::string
 		{
 
 			std::ostringstream hexout{};

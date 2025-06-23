@@ -143,11 +143,11 @@ namespace clone
 
 		}
 
-		std::string hash_20_to_40(
+		std::string binary_sha_to_hex(
 			DatasourcePtr<> const& ds
 		)
 		{
-			auto toHexChar = [](unsigned char in) -> std::string {
+			/*auto toHexChar = [](unsigned char in) -> std::string {
 				if (in > 15) throw std::out_of_range("Value out of hex range");
 				return std::format("{:x}", in); };
 			std::ostringstream oss;
@@ -157,14 +157,12 @@ namespace clone
 				char first = (next >> 4) & 0x0F;
 				oss << toHexChar(first) << toHexChar(second);
 			}
-			return oss.str();
-		}
-		//TODO: Reverse the function so that the former one depends on it to avoid the unnecessary initializiation of the shared_ptr
-		std::string hash_20_to_40(
-			const std::string& hash20
-		)
-		{
-			return hash_20_to_40(std::make_shared<StringDataSource<>>(hash20));
+			return oss.str();*/
+			auto input = ds->advanceN(commands::constants::sha1Size); 
+			if (std::ranges::any_of(input, [](auto x) {return x == EOF; }))
+				throw std::out_of_range("Too small dataSource!"); 
+
+			return commands::utilities::binary_sha_to_hex(input);
 		}
 	}
 
@@ -483,7 +481,7 @@ namespace clone
 
 	std::string GitPackParser::parse_hash_20()
 	{
-		return internal::hash_20_to_40(_dataSource);
+		return internal::binary_sha_to_hex(_dataSource);
 	}
 
 	PackObjectHeader GitPackParser::parse_objectHeader()
@@ -540,7 +538,7 @@ namespace clone
 		if (object.type == ObjectType::TREE) {
 			const auto& d = object.uncompressedData;
 			size_t current = 0;
-			/*TreeFile : [TreeEnry]
+			/*TreeFile : [TreeEnry][\n[TreeEntry]]*
 			* TreeEntry = "{perm} {name}\0{}hash"
 			*/
 			auto nextSpace = d.find(' ');
@@ -549,7 +547,7 @@ namespace clone
 			while (nextSpace != std::string::npos && nextNull != std::string::npos) {
 				auto filename = d.substr(nextSpace + 1, nextNull - nextSpace - 1);
 				auto hash20 = d.substr(nextNull + 1, 20);
-				auto hash40 = internal::hash_20_to_40(hash20);
+				auto hash40 = commands::utilities::binary_sha_to_hex(hash20);
 				if (objects.count(hash40) != 0) {
 					auto nextObject = objects.at(hash40);
 					auto newPath = currentPath / filename;
@@ -562,8 +560,8 @@ namespace clone
 				{
 					std::println(std::cerr, "Trying to write a hash:\t {} that is not not in the map! ", hash40);
 				}
-				nextSpace = d.find(' ', nextNull + 21);
-				nextNull = d.find('\0', nextNull + 21);
+				nextSpace = d.find(' ', nextNull + commands::constants::sha1Size+1);
+				nextNull = d.find('\0', nextNull + commands::constants::sha1Size+1);
 			}
 		}
 	}

@@ -215,17 +215,8 @@ namespace clone
 		std::string apply_ref_delta(const packstring& baseRef, const packstring& delta_data)
 		{
 
-			// 1. Convert binary SHA to hex
-			auto bin_sha_to_hex = [](const packstring& bin_sha) -> std::string {
-				std::ostringstream oss;
-				for (unsigned char c : bin_sha) {
-					oss << std::hex << std::setw(2) << std::setfill('0')
-						<< static_cast<int>(c);
-				}
-				return oss.str();
-				};
-
-			std::string base_sha = bin_sha_to_hex(baseRef);
+			
+			std::string base_sha = commands::utilities::binary_sha_to_hex(std::string{ baseRef.begin(), baseRef.end() });
 
 			// 2. Get base object content using your existing utilities
 			//BUG: Not working now return the object here

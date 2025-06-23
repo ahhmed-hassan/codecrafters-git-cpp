@@ -18,7 +18,7 @@ namespace commands
 			std::filesystem::path const& targetPath= std::filesystem::current_path()
 		);
 		std::expected<std::string, std::string> hash_and_save(std::string const& toHash, bool save);
-		auto to_hex(std::string_view sha) -> std::string;
+		auto binary_sha_to_hex(std::string sha) -> std::string;
 	}
 		
 }
