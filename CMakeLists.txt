@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.20)
 
 project(git-starter-cpp)
 
@@ -11,6 +11,9 @@ file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.hpp)
 find_package(OpenSSL REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(CPR CONFIG REQUIRED)
+if (cpr_FOUND)
+    message(STATUS "Found cpr: ${cpr_CONFIG} (found version ${cpr_VERSION})")
+endif ()
 
 add_executable(git ${SOURCE_FILES})
 
