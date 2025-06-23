@@ -256,7 +256,7 @@ namespace commands
 			}
 			else
 				// HACK : replace with optioonal return type and make and_then at the caller.
-				throw std::runtime_error("");
+				;
 			});
 
 		auto trees = entriesHashe
