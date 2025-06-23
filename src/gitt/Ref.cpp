@@ -1,9 +1,12 @@
 #include "CloneTypes.h"
 
-namespace clone
+namespace commands
 {
-	std::string HeadRef::sha() const
+	namespace clone
 	{
-		return this->ref.object_id; 
+		std::string HeadRef::sha() const
+		{
+			return this->ref.object_id;
+		}
 	}
 }
