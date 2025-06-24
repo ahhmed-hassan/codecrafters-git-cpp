@@ -149,22 +149,45 @@ namespace commands
 				DatasourcePtr<> const& ds
 			)
 			{
-				/*auto toHexChar = [](unsigned char in) -> std::string {
+				auto toHexChar = [](unsigned char in) -> std::string {
 					if (in > 15) throw std::out_of_range("Value out of hex range");
 					return std::format("{:x}", in); };
 				std::ostringstream oss;
-				for (size_t i = 0; i < 20; ++i) {
+				for (size_t i = 0; i < constants::sha1Size; ++i) {
 					char next = ds->advance();
 					char second = next & 0x0F;
 					char first = (next >> 4) & 0x0F;
 					oss << toHexChar(first) << toHexChar(second);
 				}
-				return oss.str();*/
-				auto input = ds->advanceN(constants::sha1Size);
-				if (std::ranges::any_of(input, [](auto x) {return x == EOF; }))
+				return oss.str();
+				
+				/*if (std::ranges::any_of(input, [](auto x) {return x == EOF; }))
 					throw std::out_of_range("Too small dataSource!");
-
-				return utilities::binary_sha_to_hex(input);
+					*/
+				/*auto input = ds->advanceN(constants::sha1Size);
+				return utilities::binary_sha_to_hex(input);*/
+			}
+		
+			std::string encode_object(
+				ObjectType type,
+				const std::string& uncompressedData) {
+				std::ostringstream oss;
+				switch (type) {
+				case ObjectType::BLOB:
+					oss << "blob " << uncompressedData.size() << '\0';
+					break;
+				case ObjectType::TREE:
+					oss << "tree " << uncompressedData.size() << '\0';
+					break;
+				case ObjectType::COMMIT:
+					oss << "commit " << uncompressedData.size() << '\0';
+					break;
+				default:
+					std::cerr << "TRYING TO ENCODE UNKNOWN OBJECT TYPE, just using uncompressedData: " << std::endl;
+					break;
+				}
+				oss << uncompressedData;
+				return oss.str();
 			}
 		}
 
@@ -280,8 +303,7 @@ namespace commands
 				finalObject.type = referencedObject.type;
 				finalObject.uncompressedData = build_deltadata_from_instructions(deltaRef.uncompressedData, referencedObject.uncompressedData);
 
-				auto dataToCompress = finalObject.get_type_for_non_deltiifed() + std::to_string(finalObject.uncompressedData.size()) +
-					'\0' + finalObject.uncompressedData;
+				auto dataToCompress = internal::encode_object(finalObject.type, finalObject.uncompressedData);
 
 				finalObject.compressedData = utilities::zlib_compressed_str(dataToCompress);
 				auto hash = utilities::hash_and_save(dataToCompress, false);
@@ -414,7 +436,7 @@ namespace commands
 				if (result.is_not_deltified()) {
 					// Adds object header
 					auto typeAsStr = result.get_type_for_non_deltiifed();
-					auto objectToCompress = typeAsStr + std::to_string(result.uncompressedData.size()) + '\0' + result.uncompressedData;
+					auto objectToCompress = internal::encode_object(result.type, result.uncompressedData);
 					auto hashResult =  utilities::hash_and_save(objectToCompress, false);
 					if (!hashResult.has_value()) return std::unexpected(hashResult.error());
 					result.hash = hashResult.value();
@@ -480,7 +502,7 @@ namespace commands
 		PackHeader GitPackParser::parse_header()
 		{
 			auto res = extract_packHeader(this->_input);
-			this->_dataSource->advanceN( constants::clone::objectsBeginPos);
+			this->_dataSource->advanceN( 20);
 			return res;
 		}
 
@@ -571,14 +593,16 @@ namespace commands
 			}
 		}
 
-		std::expected<std::string, std::string> clone(std::string const url)
+		std::expected<std::string, std::string> clone(
+			std::string const url, 
+			std::filesystem::path const& beginPath)
 		{
 			using std::unexpected;
 
 			auto head = clone::get_head(url);
 			auto packString = clone::fetch_packfile<char>(url, head);
-			std::filesystem::path targetPath = std::filesystem::current_path() / "/tmp/bin_pack";
-			std::ofstream(targetPath, std::ios::binary) << packString;
+			std::filesystem::path targetPath = beginPath;
+			std::ofstream("/tmp/bin_pack", std::ios::binary) << packString;
 
 			std::ifstream file(packString, std::ios::in | std::ios::binary);
 			std::ostringstream oss{};

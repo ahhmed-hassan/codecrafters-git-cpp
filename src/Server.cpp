@@ -27,7 +27,7 @@ int convert_expected(const std::expected<Val, Err>& e, bool print)
 	}
 };
 
-//#define DEBUG
+#define DEBUG
 #ifndef DEBUG
 int main(int argc, char* argv[]) {
 	std::vector<std::string> args(argv, argv + argc);
@@ -49,10 +49,10 @@ int main(int argc, char* argv[]) {
 		//clone::extract_packHeader(packfile);
 		//std::cout << "First 20 bytes: " << packfile.substr(0, 20) << "\n";
 	}
-	catch (const std::exception& e) {
+	/*catch (const std::exception& e) {
 		std::cerr << "Error: " << e.what() << "\n";
 	}
-	return 0;
+	return 0;*/
 
 #else
 #include<sstream>
@@ -145,7 +145,10 @@ int main() {
 	else if (command == "clone")
 	{
 		std::string url = args[2];
-		auto res = commands::clone::clone(url);
+		std::filesystem::path p = std::filesystem::current_path(); 
+		if (argc == 4)
+			p = p / args.back();
+		auto res = commands::clone::clone(url, p);
 		return convert_expected(res, true);
 	}
 	else {
