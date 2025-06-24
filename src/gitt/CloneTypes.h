@@ -3,6 +3,7 @@
 #include <vector>
 #include <variant>
 #include <expected>
+#include <cstdint>
 
 namespace commands
 {
