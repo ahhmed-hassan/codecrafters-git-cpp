@@ -329,6 +329,29 @@ namespace commands
 			assert(is_not_deltified());
 			return internal::objecttype_to_str(type);
 		}
+
+
+		std::string GitObject::compress_input() const {
+			return get_type_for_non_deltiifed() + " " + std::to_string(uncompressedData.size()) + '\0' + uncompressedData;
+		}
+
+		std::expected<std::string, std::string> GitObject::encode_and_get_hash() {
+			if (uncompressedData.empty())
+				return std::unexpected("I cannot encode data before getting my uncompressed Data initilized");
+
+			auto compressInput = compress_input();
+			compressedData = utilities::zlib_compressed_str(compressInput);
+
+			auto hashResult = utilities::hash_and_save(compressInput, false);
+			if (hashResult)
+			{
+				hash = hashResult.value();
+				return hash;
+			}
+			else
+				return std::unexpected(hashResult.error());
+		}
+
 #pragma endregion
 
 
