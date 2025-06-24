@@ -11,7 +11,6 @@ namespace commands
 
 		//TODO::Make it templated
 		std::string zlib_compressed_str(std::string const& input);
-		std::string zlib_compressed_str(std::basic_string<unsigned char> const& input);
 
 		std::filesystem::path create_directories_and_get_path_from_hash(
 			std::string const& sha, 
