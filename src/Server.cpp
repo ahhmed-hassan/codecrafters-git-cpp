@@ -16,7 +16,7 @@ int convert_expected(const std::expected<Val, Err>& e, bool print)
 {
 	if (e)
 	{
-		if (print) std::cout << e.value() << "\n";
+		if (print) std::cout << e.value();// << "\n";
 		return EXIT_SUCCESS;
 	}
 	else
