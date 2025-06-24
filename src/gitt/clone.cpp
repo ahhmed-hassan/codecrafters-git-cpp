@@ -168,6 +168,11 @@ namespace commands
 				return utilities::binary_sha_to_hex(input);*/
 			}
 		
+			DeltarefObject from_gitobject(
+				GitObject const& obj
+			) {
+				return DeltarefObject{ ._referenedHash = obj.hash, ._instructions = obj.uncompressedData };
+			}
 		}
 
 		namespace delta
@@ -276,11 +281,11 @@ namespace commands
 			}
 
 			GitObject build_object_from_reference(
-				const GitObject& deltaRef,
+				const DeltarefObject& deltaRef,
 				const GitObject& referencedObject) {
 				GitObject finalObject;
 				finalObject.type = referencedObject.type;
-				finalObject.uncompressedData = build_deltadata_from_instructions(deltaRef.uncompressedData, referencedObject.uncompressedData);
+				finalObject.uncompressedData = build_deltadata_from_instructions(deltaRef._instructions, referencedObject.uncompressedData);
 
 				auto dataToCompress = finalObject.compress_input(); 
 
@@ -303,7 +308,7 @@ namespace commands
 			**/
 			[[nodiscard]] auto resolve_delta_refs(
 				const std::unordered_map<std::string, GitObject>& baseObjectsMap,
-				std::queue<GitObject>& deltaRefs
+				std::queue<DeltarefObject>& deltaRefs
 			) -> std::unordered_map<std::string, GitObject>
 			{
 				std::unordered_map<std::string, size_t> sizeOFdeltasWhenFailed{};
@@ -311,7 +316,7 @@ namespace commands
 				while (!deltaRefs.empty()) {
 					auto nextRef = deltaRefs.front();
 					deltaRefs.pop();
-					auto referencedHash = nextRef.hash;
+					auto referencedHash = nextRef._referenedHash;
 					if (allResolvedObjects.contains(referencedHash)) {
 						auto referencedObject = allResolvedObjects.at(referencedHash);
 						auto newObject = build_object_from_reference(nextRef, referencedObject);
@@ -358,7 +363,7 @@ namespace commands
 		auto GitPackParser::parse_bin_pack() -> std::expected<std::unordered_map<std::string, GitObject>, std::string>
 		{
 			Bytef* rawData = reinterpret_cast<Bytef*>(_input.data());
-			auto numObjects = parse_header().objectCount;
+			auto const numObjects = parse_header().objectCount;
 			// The header parses 20 bytes
 			rawData += 20;
 			z_stream stream;
@@ -375,7 +380,7 @@ namespace commands
 			int zlibReturn = Z_OK;
 			int bytesRemaining = _input.size() - 20;
 			std::unordered_map<std::string, GitObject> objectMap;
-			std::queue<GitObject> deltaRefs;
+			std::queue<DeltarefObject> deltaRefs;
 			for (size_t i = 0; i < numObjects; ++i) {
 				inflateReset(&stream);
 				// auto [nextObject, bytesParsed] = parseNextObject(rawData, &stream, zlibReturn);
@@ -424,7 +429,7 @@ namespace commands
 					objectMap[result.hash] = result;
 				}
 				else if (result.type == ObjectType::REF_DELTA) {
-					deltaRefs.push(result);
+					deltaRefs.push(internal::from_gitobject(result));
 				}
 				else {
 					std::cerr << "UNKNOWN OBJECT TYPE...skipping!" << std::endl;
@@ -439,6 +444,9 @@ namespace commands
 				return std::unexpected("Zlib stream did not finish at end: " + std::to_string(zlibReturn));
 			}
 			size_t const allObjectsCount = objectMap.size() + deltaRefs.size(); 
+			if (allObjectsCount != numObjects)
+				return std::unexpected("The parsed objects is different form the num of objects in the header");
+
 			auto allResolvedObjects = delta::resolve_delta_refs(objectMap, deltaRefs);
 			if (allResolvedObjects.size() != allObjectsCount)
 				return std::unexpected("There is a dicrepancy between the objects that should be parsed");
