@@ -15,7 +15,7 @@ set(USE_SYSTEM_GTEST ON CACHE BOOL "Use system-installed GTest")
 # Locate dependencies
 find_package(OpenSSL REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(CPR CONFIG REQUIRED)
+find_package(cpr CONFIG REQUIRED)
 
 # Include directories provided by dependencies
 include_directories(${CPR_INCLUDE_DIRS})
