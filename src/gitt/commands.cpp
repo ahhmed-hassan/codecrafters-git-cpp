@@ -136,7 +136,7 @@ namespace commands
 				return EXIT_FAILURE;
 			}
 
-			std::cout << "Initialized git directory\n";
+			std::cout << "Initialized git directory in" <<constants::objectsDir.parent_path().string()<< "\n";
 			return EXIT_SUCCESS;
 		}
 		catch (const std::filesystem::filesystem_error& e) {

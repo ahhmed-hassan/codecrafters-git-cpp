@@ -26,7 +26,7 @@ int convert_expected(const std::expected<Val, Err>& e, bool print)
 	}
 };
 
-//#define DEBUG
+#define DEBUG
 #ifndef DEBUG
 int main(int argc, char* argv[]) {
 	std::vector<std::string> args(argv, argv + argc);
@@ -125,8 +125,9 @@ int main() {
 		if (argc == 4)
 		{
 			p = p / args.back();
+			std::println(std::cerr, "OutputDir was {}", p.string());
 #ifndef DEBUG
-			p = args.back(); 
+			//p = args.back(); 
 #endif // !DEBUG
 
 		}
