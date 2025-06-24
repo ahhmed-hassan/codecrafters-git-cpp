@@ -40,9 +40,7 @@ namespace commands
 
         };
 
-        std::expected<std::string, std::string> clone(
-            std::string const url, 
-            std::filesystem::path const& beginPath = std::filesystem::current_path());
+       
 
     }
 }
