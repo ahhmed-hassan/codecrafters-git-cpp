@@ -43,4 +43,12 @@ namespace commands
 		std::expected<std::string, std::string> hash_and_save(std::string const& toHash, bool save = true);
 		[[nodiscard]] std::vector<Tree> parse_trees(std::string const& treeHash);
 	}
+
+	namespace clone
+	{
+		std::expected<std::string, std::string> clone(
+			std::string const url,
+			std::filesystem::path const& beginPath = std::filesystem::current_path());
+	}
+	
 }
