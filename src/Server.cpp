@@ -26,33 +26,10 @@ int convert_expected(const std::expected<Val, Err>& e, bool print)
 	}
 };
 
-#define DEBUG
+//#define DEBUG
 #ifndef DEBUG
 int main(int argc, char* argv[]) {
 	std::vector<std::string> args(argv, argv + argc);
-	auto url = "https://github.com/git/git";
-	url = "https://github.com/git/git-reference";
-	auto g = commands::clone::internal::parse_refs_info(commands::clone::internal::get_refs_info());
-	//auto head = clone::get_head(url);
-
-	try {
-		//clone::packstring packfile = clone::fetch_packfile(url, head);
-		//std::string test = clone::extract_packFile(packfile); 
-		//std::cout << test << "\n\n";
-		//auto firstNull = packfile.substr(packfile.find('\0')+1);
-		//std::stringstream x{ firstNull }; 
-		//zstr::istream y(x);
-		//std::string const blob{ std::istreambuf_iterator<char>(y), std::istreambuf_iterator<char>() };
-		//std::cout << blob << "\n\n";
-		//std::cout << firstNull << "\n\n";
-		//clone::extract_packHeader(packfile);
-		//std::cout << "First 20 bytes: " << packfile.substr(0, 20) << "\n";
-	}
-	/*catch (const std::exception& e) {
-		std::cerr << "Error: " << e.what() << "\n";
-	}
-	return 0;*/
-
 #else
 #include<sstream>
 int main() {
