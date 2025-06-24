@@ -118,21 +118,21 @@ namespace commands
 
 
 	}
-	int init()
+	int init(fs::path const& beginPath)
 	{
 
 		try {
 			//std::filesystem::create_directory(constants::gitDir);
-			std::filesystem::create_directories(constants::objectsDir);
-			std::filesystem::create_directories(constants::refsDir);
+			std::filesystem::create_directories(beginPath/ constants::objectsDir);
+			std::filesystem::create_directories(beginPath / constants::refsDir);
 
-			std::ofstream headFile(constants::head);
+			std::ofstream headFile(beginPath/ constants::head);
 			if (headFile.is_open()) {
 				headFile << "ref: refs/heads/main\n";
 				headFile.close();
 			}
 			else {
-				std::cerr << std::format("Failed to create {} file\n", constants::head.string());
+				std::cerr << std::format("Failed to create {} file\n", (beginPath/ constants::head).string());
 				return EXIT_FAILURE;
 			}
 

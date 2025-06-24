@@ -575,7 +575,7 @@ namespace commands
 			try
 			{
 				auto const parser = GitPackParser(packString);
-				int res =  init();
+				int res =  init(targetPath);
 				if (res == EXIT_FAILURE) return std::unexpected("Failure in init");
 
 				for (const auto& [hash, object] : parser)

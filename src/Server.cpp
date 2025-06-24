@@ -66,7 +66,7 @@ int main() {
 
 
 	if (command == "init") {
-		return commands::init();
+		return commands::init(std::filesystem::current_path());
 	}
 	else if (command == "cat-file") {
 		std::string option = args[2];
