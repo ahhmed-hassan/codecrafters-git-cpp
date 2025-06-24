@@ -123,7 +123,13 @@ int main() {
 		std::string url = args[2];
 		std::filesystem::path p = std::filesystem::current_path(); 
 		if (argc == 4)
+		{
 			p = p / args.back();
+#ifndef DEBUG
+			p = args.back(); 
+#endif // !DEBUG
+
+		}
 		auto res = commands::clone::clone(url, p);
 		return convert_expected(res, true);
 	}
