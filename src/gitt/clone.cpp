@@ -6,7 +6,7 @@
 #include "utilities.h"
 #include "clone.h"
 #include "commands.h"
-
+#include <ranges>
 namespace commands
 {
 	namespace clone
