@@ -15,7 +15,7 @@ set(USE_SYSTEM_GTEST ON CACHE BOOL "Use system-installed GTest")
 # Locate dependencies
 find_package(OpenSSL REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(CPR REQUIRED)
+find_package(CPR CONFIG REQUIRED)
 
 # Include directories provided by dependencies
 include_directories(${CPR_INCLUDE_DIRS})
@@ -25,4 +25,6 @@ file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.hpp)
 
 # Define executable target and link libraries
 add_executable(git ${SOURCE_FILES})
-target_link_libraries(git PRIVATE OpenSSL::Crypto ZLIB::ZLIB ${CPR_LIBRARIES})
+target_link_libraries(git PRIVATE OpenSSL::Crypto) 
+target_link_libraries(git PRIVATE ZLIB::ZLIB )
+target_link_libraries(git PRIVATE cpr::cpr )
