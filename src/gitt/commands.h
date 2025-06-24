@@ -19,7 +19,7 @@ namespace commands
 		Tree(std::string_view perm, std::string_view name, std::string_view hash);
 		Tree(std::filesystem::directory_entry const& de, std::string const& hash);
 	};
-	int init();
+	int init(std::filesystem::path const& beginPath);
 	std::expected<std::string, std::string> cat(std::string option, std::string args);
 	/*
 	* Realizing of git hash-object -w for some given path.
