@@ -40,15 +40,7 @@ namespace commands
 			return compressed;
 		}
 
-		std::string zlib_compressed_str(std::basic_string<unsigned char> const& input)
-		{
-			auto compressedSize = compressBound(static_cast<uLong>(input.size()));
-			std::string compressed{}; compressed.resize(compressedSize);
-			compress(reinterpret_cast<Bytef*>(&compressed[0]), &compressedSize, reinterpret_cast<Bytef const*>(input.data()), static_cast<uLong>(input.size()));
-			compressed.resize(compressedSize);
-			return compressed;
-		}
-
+		
 		std::filesystem::path create_directories_and_get_path_from_hash(
 			std::string const& objectHash, 
 			std::filesystem::path const& targetBeginPath

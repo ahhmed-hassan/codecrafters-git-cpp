@@ -96,29 +96,6 @@ namespace commands
 			return header;
 		}
 
-		void process_packfile(packstring const& packData)
-		{
-			PackHeader packHeader = extract_packHeader(packData);
-
-			size_t objectOffset =  constants::clone::objectsBeginPos;
-			for (uint32_t i{}; i < packHeader.objectCount; i++)
-			{
-				internal::ObjectHeader objHeader = internal::get_object_header_beginning_at(packData, objectOffset);
-
-				//Move to the actual compressed Data for the header
-				objectOffset += objHeader.headerBytes;
-
-				auto dataCompressed = packData.substr(
-					objectOffset,
-					packData.size() - objectOffset - 20
-				);
-
-				internal::process_git_object(objHeader.is_deltified(), dataCompressed);
-
-				//Move To Next Object
-				objectOffset += dataCompressed.size();
-			}
-		}
 
 		namespace internal
 		{
