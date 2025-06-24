@@ -122,7 +122,7 @@ namespace commands
 				switch (objType)
 				{
 				case ObjectType::COMMIT:
-					return "commmit";
+					return "commit";
 				case ObjectType::BLOB:
 					return "blob";
 				case ObjectType::TREE:
