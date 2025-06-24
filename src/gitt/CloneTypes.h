@@ -41,6 +41,12 @@ namespace commands
             bool is_not_deltified() const;
             std::string get_type_for_non_deltiifed() const;
         };
+        struct DeltarefObject
+        {
+            std::string _referenedHash{};
+            std::string _instructions{};
+                
+        };
 
         struct PackObjectHeader
         {
