@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <variant>
+#include <expected>
 
 namespace commands
 {
@@ -35,6 +36,8 @@ namespace commands
             ObjectType type;
             std::string compressedData;
             std::string uncompressedData;
+            std::string compress_input() const; 
+            std::expected<std::string, std::string> encode_and_get_hash(); 
             bool is_not_deltified() const;
             std::string get_type_for_non_deltiifed() const;
         };

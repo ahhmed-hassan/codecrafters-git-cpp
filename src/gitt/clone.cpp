@@ -168,27 +168,6 @@ namespace commands
 				return utilities::binary_sha_to_hex(input);*/
 			}
 		
-			std::string encode_object(
-				ObjectType type,
-				const std::string& uncompressedData) {
-				std::ostringstream oss;
-				switch (type) {
-				case ObjectType::BLOB:
-					oss << "blob " << uncompressedData.size() << '\0';
-					break;
-				case ObjectType::TREE:
-					oss << "tree " << uncompressedData.size() << '\0';
-					break;
-				case ObjectType::COMMIT:
-					oss << "commit " << uncompressedData.size() << '\0';
-					break;
-				default:
-					std::cerr << "TRYING TO ENCODE UNKNOWN OBJECT TYPE, just using uncompressedData: " << std::endl;
-					break;
-				}
-				oss << uncompressedData;
-				return oss.str();
-			}
 		}
 
 		namespace delta
@@ -303,7 +282,7 @@ namespace commands
 				finalObject.type = referencedObject.type;
 				finalObject.uncompressedData = build_deltadata_from_instructions(deltaRef.uncompressedData, referencedObject.uncompressedData);
 
-				auto dataToCompress = internal::encode_object(finalObject.type, finalObject.uncompressedData);
+				auto dataToCompress = finalObject.compress_input(); 
 
 				finalObject.compressedData = utilities::zlib_compressed_str(dataToCompress);
 				auto hash = utilities::hash_and_save(dataToCompress, false);
@@ -435,8 +414,7 @@ namespace commands
 				// std::cerr << result.uncompressedData << std::endl;
 				if (result.is_not_deltified()) {
 					// Adds object header
-					auto typeAsStr = result.get_type_for_non_deltiifed();
-					auto objectToCompress = internal::encode_object(result.type, result.uncompressedData);
+					auto objectToCompress = result.compress_input();
 					auto hashResult =  utilities::hash_and_save(objectToCompress, false);
 					if (!hashResult.has_value()) return std::unexpected(hashResult.error());
 					result.hash = hashResult.value();
