@@ -13,10 +13,6 @@ namespace commands
 
 #define ZLIB_LOWLEVEL
 
-        //HeadRef get_head(std::string const& url); 
-        //packstring fetch_packfile(const std::string& url,  HeadRef head);
-        //PackHeader extract_packHeader(packstring const& packData);
-        //void process_packfile(packstring const& packData);
         class GitPackParser {
         public:
             GitPackParser(const std::string& inputPack);
