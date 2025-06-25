@@ -104,8 +104,8 @@ namespace commands
 			)
 			{
 
-				const char last7Mask = 0x7F;
-				const char msbMask = 0x80;
+				const unsigned char last7Mask = 0x7F;
+				const unsigned char msbMask = 0x80;
 				auto currentByte = src->advance();
 				auto keepParsingg = [msbMask](char currentByte) {
 					return (msbMask & currentByte) != 0;  };
@@ -169,8 +169,8 @@ namespace commands
 				DatasourcePtr<> const& src
 			)
 			{
-				char command = src->advance();
-				const char msbMask = 0x80;
+				char const command = src->advance();
+				const unsigned char msbMask = 0x80;
 				if (bool isCopy = (msbMask & command) != 0; isCopy) {
 
 					const char offsetMask = 0x0F;
@@ -355,7 +355,7 @@ namespace commands
 			}
 
 			int zlibReturn = Z_OK;
-			int bytesRemaining = _input.size() - 20;
+			auto bytesRemaining = _input.size() - 20;
 			std::unordered_map<std::string, GitObject> objectMap;
 			std::queue<DeltarefObject> deltaRefs;
 			for (size_t i = 0; i < numObjects; ++i) {
@@ -439,7 +439,7 @@ namespace commands
 			return std::expected<std::unordered_map<std::string, GitObject>, std::string>();
 	}
 
-#endif // DEBUG
+#endif // ZLIB_LOWLEVEL
 
 		auto GitPackParser::begin() const
 
@@ -479,10 +479,10 @@ namespace commands
 			char currentByte = _dataSource->advance();
 			size_t bytesParsed = 1;
 			size_t currentSize = 0;
-			const char msbMask = 0x80;
-			const char typeMask = 0x70;
-			const char last4Mask = 0x0F;
-			const char last7Mask = 0x7F;
+			const unsigned char msbMask = 0x80;
+			const unsigned char typeMask = 0x70;
+			const unsigned char last4Mask = 0x0F;
+			const unsigned char last7Mask = 0x7F;
 			char typeChar = (typeMask & currentByte) >> 4;
 			auto objectType = static_cast<ObjectType>(typeChar);
 
