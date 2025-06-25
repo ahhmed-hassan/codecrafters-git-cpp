@@ -123,20 +123,20 @@ namespace commands
 
 		try {
 			//std::filesystem::create_directory(constants::gitDir);
-			std::filesystem::create_directories(beginPath/ constants::objectsDir);
+			std::filesystem::create_directories(beginPath / constants::objectsDir);
 			std::filesystem::create_directories(beginPath / constants::refsDir);
 
-			std::ofstream headFile(beginPath/ constants::head);
+			std::ofstream headFile(beginPath / constants::head);
 			if (headFile.is_open()) {
 				headFile << "ref: refs/heads/main\n";
 				headFile.close();
 			}
 			else {
-				std::cerr << std::format("Failed to create {} file\n", (beginPath/ constants::head).string());
+				std::cerr << std::format("Failed to create {} file\n", (beginPath / constants::head).string());
 				return EXIT_FAILURE;
 			}
 
-			std::cout << "Initialized git directory in" <<constants::objectsDir.parent_path().string()<< "\n";
+			std::cout << "Initialized git directory in" << constants::objectsDir.parent_path().string() << "\n";
 			return EXIT_SUCCESS;
 		}
 		catch (const std::filesystem::filesystem_error& e) {
@@ -231,25 +231,25 @@ namespace commands
 		std::ranges::sort(vec, {}, [](const fs::directory_entry& de) {return de.path().filename(); });
 
 		struct HashAndEntry { std::string hash{}; fs::directory_entry e{}; };
+		using HashentryResult = std::expected<HashAndEntry, std::string>;
+		auto entriesHashe = std::ranges::transform_view(vec, [](fs::directory_entry const& e)->
+			HashentryResult {
+				auto shaHash = fs::is_directory(e) ?
+					write_tree_and_get_hash(e.path()) :
+					hash(e.path(), true, false);
+				return shaHash.transform([&](std::string const& hash) {
+					return HashAndEntry{ utilities::hexToByteString(hash), e };
+					});
 
-		auto entriesHashe = std::ranges::transform_view(vec, [](fs::directory_entry const& e)-> HashAndEntry {
-			if (fs::is_directory(e)) {
-				if (auto hash = write_tree_and_get_hash(e.path()); hash.has_value())
-				{
-					return HashAndEntry{ utilities::hexToByteString(hash.value()), e };
-				}
-			}
-			else if (auto shaHash = hash(e.path(), true, false); shaHash.has_value())
-			{
-				return HashAndEntry{ utilities::hexToByteString(shaHash.value()),e };
-			}
-			else
-				// HACK : replace with optioonal return type and make and_then at the caller.
-				;
 			});
+		auto entries = entriesHashe | std::ranges::to<std::vector>();
 
-		auto trees = entriesHashe
-			| std::views::transform([](HashAndEntry const& x) -> Tree {return Tree(x.e, x.hash); })
+		if (auto it = std::ranges::find_if(entries, std::not_fn(&HashentryResult::has_value));
+			it != std::ranges::end(entries))
+			return std::unexpected(it->error());
+
+		auto trees = entries
+			| std::views::transform([](HashentryResult const& x) -> Tree {return Tree(x.value().e, x.value().hash); })
 			| std::ranges::to<std::vector>();
 
 		auto treeConverter = [](const Tree& t) ->std::string
