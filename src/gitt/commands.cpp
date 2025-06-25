@@ -264,16 +264,9 @@ namespace commands
 
 	}
 
-	int write_tree(std::filesystem::path path)
+	std::expected<std::string, std::string> write_tree(std::filesystem::path path)
 	{
-		if (auto res = write_tree_and_get_hash(path); res.has_value())
-		{
-			std::cout << res.value(); return EXIT_SUCCESS;
-		}
-		else
-		{
-			std::println(std::cout, "{}", res.error()); return EXIT_FAILURE;
-		}
+		return write_tree_and_get_hash(path);
 	}
 
 	auto commmit(

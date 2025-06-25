@@ -90,7 +90,7 @@ int main() {
 	}
 	else if (command == "write-tree")
 	{
-		return commands::write_tree();
+		return convert_expected(commands::write_tree(), true);
 	}
 	else if (command == "commit-tree")
 	{

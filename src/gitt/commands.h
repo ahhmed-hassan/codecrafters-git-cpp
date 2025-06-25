@@ -28,8 +28,7 @@ namespace commands
 
 
 	int ls_tree(std::string args, bool namesOnly);
-	//TODO: Refactor the return type to std::expected;
-	int write_tree(std::filesystem::path path = ".");
+	std::expected<std::string, std::string> write_tree(std::filesystem::path path = ".");
 	auto commmit(std::string const treeHash, std::optional<std::string> parentTreeHash, std::optional<std::string> message = std::nullopt)
 		-> std::expected<std::string, std::string>;
 	namespace utilities
